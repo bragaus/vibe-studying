@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Mic } from "lucide-react";
 import heroImage from "@/assets/hero-vibe.jpg";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -64,14 +65,15 @@ const Hero = () => {
             transition={{ duration: 0.7, delay: 0.5 }}
             className="flex flex-wrap items-center gap-4"
           >
-            <a
+            <Link
               id="cta"
-              href="#feed"
+              to="/auth"
               className="group inline-flex items-center gap-2 font-mono-vibe text-sm bg-primary text-primary-foreground px-6 py-4 glow-pink hover:scale-[1.02] transition-transform"
             >
               ENTRAR_NA_VIBE
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
+            
             <a
               href="#stack"
               className="inline-flex items-center gap-2 font-mono-vibe text-sm border border-secondary/60 text-secondary px-6 py-4 hover:bg-secondary/10 transition-colors"
