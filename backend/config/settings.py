@@ -131,14 +131,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Diz ao Django que o projeto usa um User customizado em vez do auth.User padrao.
 AUTH_USER_MODEL = 'accounts.User'
 
+LOCAL_DEV_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+]
+
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000',
+    ','.join(LOCAL_DEV_ORIGINS),
 )
 CSRF_TRUSTED_ORIGINS = env_list(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000',
+    ','.join(LOCAL_DEV_ORIGINS),
 )
+
+if DEBUG:
+    for origin in LOCAL_DEV_ORIGINS:
+        if origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(origin)
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 JWT_ALGORITHM = 'HS256'
 # O JWT usa uma chave dedicada, mas cai na SECRET_KEY se nao houver outra definida.
