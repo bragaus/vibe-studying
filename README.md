@@ -1,8 +1,8 @@
 <h1 align="center">Vibe Studying</h1>
 
 <p align="center">
-  O Vibe Studying e um projeto educacional que transforma a logica de feed infinito em experiencia de estudo.
-  Em vez de consumir conteudo vazio, o usuario navega por lessons curtas inspiradas em cultura pop, com foco em aprendizagem rapida e repetivel.
+  O Vibe Studying é um projeto educacional que transforma a lógica do feed infinito em uma experiência de estudo.
+  Em vez de consumir conteúdo vazio, o usuário navega por lessons curtas inspiradas na cultura pop, com foco em aprendizagem rápida e repetível.
 </p>
 
 <p align="center">
@@ -14,37 +14,37 @@
 </p>
 
 <p align="center">
-  <img src="./frontend/src/assets/hero-vibe.jpg" alt="Vibe Studying cover" width="100%" />
+  <img src="./frontend/src/assets/hero-vibe.jpg" alt="Capa do Vibe Studying" width="100%" />
 </p>
 
-## Overview
+## Visão Geral
 
-O projeto foi estruturado como um desafio tecnico end-to-end e hoje ja entrega uma base funcional com:
+O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entrega uma base funcional com:
 
-- landing page publica com identidade visual forte
-- autenticacao com JWT customizado
+- landing page pública com identidade visual forte
+- autenticação com JWT customizado
 - cadastro separado para aluno e professor
-- feed publico de lessons publicadas
+- feed público de lessons publicadas
 - detalhe de lesson com exercise vinculado
-- criacao e edicao de lessons pelo professor
+- criação e edição de lessons pelo professor
 - envio e consulta de submissions pelo aluno
-- testes basicos no backend e no frontend
+- testes básicos no backend e no frontend
 
 ## Status Atual
 
-- O que esta implementado no codigo: landing page, tela de auth, API Django Ninja, dominio de learning, JWT e testes principais.
-- O que aparece como visao de produto na interface: IA de pronuncia, app Flutter e workflows assincronos.
-- O que ainda nao esta implementado neste repositorio: pipeline real de IA, app mobile versionado aqui e orquestracao com Temporal.
+- O que está implementado no código: landing page, tela de autenticação, API em Django Ninja, domínio de learning, JWT e testes principais.
+- O que aparece como visão de produto na interface: IA de pronúncia, app Flutter e workflows assíncronos.
+- O que ainda não está implementado neste repositório: pipeline real de IA, app mobile versionado aqui e orquestração com Temporal.
 
 ## Stack
 
 | Camada | Tecnologia |
 | --- | --- |
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion |
-| Backend | Django 6, Django Ninja, JWT customizado |
+| Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui e Framer Motion |
+| Backend | Django 6, Django Ninja e JWT customizado |
 | Banco | PostgreSQL |
-| Testes | Vitest, Testing Library, Django TestCase |
-| UX | Visual cyberpunk, alto contraste, linguagem inspirada em HUD/feed |
+| Testes | Vitest, Testing Library e Django TestCase |
+| UX | Visual cyberpunk, alto contraste e linguagem inspirada em HUD/feed |
 
 ## Arquitetura
 
@@ -62,13 +62,13 @@ flowchart LR
 
 ## Fluxo Principal
 
-1. O usuario cria conta ou faz login via `api/auth/*`.
-2. O backend retorna `access_token`, `refresh_token` e dados resumidos do usuario.
+1. O usuário cria uma conta ou faz login via `api/auth/*`.
+2. O backend retorna `access_token`, `refresh_token` e os dados resumidos do usuário.
 3. Professores podem criar lessons com exercise embutido.
-4. Lessons publicadas entram no feed publico consumido pelo frontend.
-5. Alunos enviam submissions para exercicios e acompanham o proprio historico.
+4. Lessons publicadas entram no feed público consumido pelo frontend.
+5. Alunos enviam submissions para exercícios e acompanham o próprio histórico.
 
-## Estrutura Do Repositorio
+## Estrutura do Repositório
 
 ```text
 .
@@ -107,9 +107,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-API disponivel em `http://localhost:8000/api`.
+API disponível em `http://localhost:8000/api`.
 
-Se quiser testar rapidamente se a API subiu, use `GET /api/health`.
+Se quiser verificar rapidamente se a API subiu, use `GET /api/health`.
 
 ### Frontend
 
@@ -126,7 +126,7 @@ VITE_ANDROID_APP_URL=
 VITE_FLUTTER_ANDROID_URL=
 ```
 
-Depois rode:
+Depois, rode:
 
 ```bash
 cd frontend
@@ -134,53 +134,53 @@ npm install
 npm run dev
 ```
 
-App web disponivel em `http://localhost:8080` ou na porta informada pelo Vite.
+Aplicação web disponível em `http://localhost:8080` ou na porta informada pelo Vite.
 
-## Variaveis De Ambiente
+## Variáveis de Ambiente
 
 ### Backend
 
-| Variavel | Descricao |
+| Variável | Descrição |
 | --- | --- |
-| `DEBUG` | Liga modo de desenvolvimento |
+| `DEBUG` | Ativa o modo de desenvolvimento |
 | `SECRET_KEY` | Chave principal do Django |
 | `ALLOWED_HOSTS` | Hosts permitidos |
 | `CORS_ALLOWED_ORIGINS` | Origens liberadas para o frontend |
-| `CSRF_TRUSTED_ORIGINS` | Origens confiaveis para CSRF |
+| `CSRF_TRUSTED_ORIGINS` | Origens confiáveis para CSRF |
 | `DATABASE_NAME` | Nome do banco PostgreSQL |
-| `DATABASE_USER` | Usuario do banco |
+| `DATABASE_USER` | Usuário do banco |
 | `DATABASE_PASSWORD` | Senha do banco |
 | `DATABASE_HOST` | Host do banco |
 | `DATABASE_PORT` | Porta do banco |
 | `JWT_SECRET_KEY` | Chave para assinatura dos tokens |
-| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Duracao do access token |
-| `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Duracao do refresh token |
+| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Duração do access token |
+| `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Duração do refresh token |
 
 ### Frontend
 
-| Variavel | Descricao |
+| Variável | Descrição |
 | --- | --- |
-| `VITE_API_URL` | Base URL da API Django Ninja |
+| `VITE_API_URL` | URL base da API Django Ninja |
 | `VITE_ANDROID_APP_URL` | Link do APK Android |
 | `VITE_FLUTTER_ANDROID_URL` | Link da build Flutter Android |
 
 ## Endpoints Principais
 
-| Metodo | Rota | Funcao |
+| Método | Rota | Função |
 | --- | --- | --- |
 | `GET` | `/api/health` | Health check da API |
 | `POST` | `/api/auth/register` | Cadastro de aluno |
 | `POST` | `/api/auth/register/teacher` | Cadastro de professor |
 | `POST` | `/api/auth/login` | Login |
-| `POST` | `/api/auth/refresh` | Renovacao de token |
+| `POST` | `/api/auth/refresh` | Renovação de token |
 | `GET` | `/api/auth/me` | Perfil autenticado |
-| `GET` | `/api/feed` | Feed publico de lessons |
+| `GET` | `/api/feed` | Feed público de lessons |
 | `GET` | `/api/lessons/{slug}` | Detalhe de uma lesson |
-| `GET` | `/api/teacher/lessons` | Lista lessons do professor |
-| `POST` | `/api/teacher/lessons` | Cria lesson com exercise |
-| `PUT` | `/api/teacher/lessons/{lesson_id}` | Atualiza lesson |
-| `POST` | `/api/submissions` | Envia tentativa do aluno |
-| `GET` | `/api/submissions/me` | Lista historico do aluno |
+| `GET` | `/api/teacher/lessons` | Lista de lessons do professor |
+| `POST` | `/api/teacher/lessons` | Cria uma lesson com exercise |
+| `PUT` | `/api/teacher/lessons/{lesson_id}` | Atualiza a lesson |
+| `POST` | `/api/submissions` | Envia a tentativa do aluno |
+| `GET` | `/api/submissions/me` | Lista o histórico do aluno |
 
 ## Testes
 
@@ -202,12 +202,12 @@ npm run test
 
 ## Roadmap
 
-- avaliacao automatica de pronuncia com pipeline real de IA
+- avaliação automatizada de pronúncia com pipeline real de IA
 - roteamento completo do portal autenticado no frontend
 - app Flutter offline-first integrado ao backend
-- processamento assincrono para correcoes e distribuicao de conteudo
+- processamento assíncrono para correções e distribuição de conteúdo
 - observabilidade, deploy e CI/CD
 
 ## Nota
 
-Este README descreve o estado atual do codigo. A identidade visual da landing page comunica uma visao de produto maior do que o MVP implementado hoje, e isso foi mantido de forma intencional para apresentar o potencial da plataforma sem mascarar o escopo real entregue.
+Este README descreve o estado atual do código. A identidade visual da landing page comunica uma visão de produto maior do que o MVP implementado hoje, e isso foi mantido intencionalmente para apresentar o potencial da plataforma sem mascarar o escopo real já entregue.
