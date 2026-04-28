@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from accounts.models import User
+from accounts.models import StudentProfile, User
 
 
 class AuthApiTests(TestCase):
@@ -58,3 +58,46 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.json()["user"]["role"], User.Role.TEACHER)
         self.assertIn("access_token", response.json())
         self.assertTrue(User.objects.filter(email="teacher@example.com", role=User.Role.TEACHER).exists())
+
+    def test_student_can_fetch_and_complete_profile_onboarding(self):
+        register_response = self.client.post(
+            "/api/auth/register",
+            data={
+                "email": "profile@example.com",
+                "password": "StrongPass123!",
+                "first_name": "Pro",
+                "last_name": "File",
+            },
+            content_type="application/json",
+        )
+        token = register_response.json()["access_token"]
+
+        profile_response = self.client.get(
+            "/api/profile/me",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(profile_response.status_code, 200)
+        self.assertFalse(profile_response.json()["profile"]["onboarding_completed"])
+
+        onboarding_response = self.client.post(
+            "/api/profile/onboarding",
+            data={
+                "english_level": StudentProfile.EnglishLevel.INTERMEDIATE,
+                "favorite_songs": ["Numb", "Numb", " Yellow "],
+                "favorite_movies": ["Interstellar"],
+                "favorite_series": ["Dark"],
+                "favorite_anime": ["Naruto"],
+                "favorite_artists": ["Linkin Park"],
+                "favorite_genres": ["rock", "Sci-Fi"],
+            },
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(onboarding_response.status_code, 200)
+        self.assertTrue(onboarding_response.json()["profile"]["onboarding_completed"])
+        self.assertEqual(onboarding_response.json()["profile"]["favorite_songs"], ["Numb", "Yellow"])
+
+        profile = StudentProfile.objects.get(user__email="profile@example.com")
+        self.assertTrue(profile.onboarding_completed)
+        self.assertEqual(profile.favorite_artists, ["Linkin Park"])

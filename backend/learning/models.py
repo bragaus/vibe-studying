@@ -27,7 +27,13 @@ class Lesson(TimeStampedModel):
         CHARGE = "charge", _("Charge")
         MUSIC = "music", _("Music")
         MOVIE_CLIP = "movie_clip", _("Movie Clip")
+        SERIES_CLIP = "series_clip", _("Series Clip")
         ANIME_CLIP = "anime_clip", _("Anime Clip")
+
+    class Difficulty(models.TextChoices):
+        EASY = "easy", _("Easy")
+        MEDIUM = "medium", _("Medium")
+        HARD = "hard", _("Hard")
 
     class SourceType(models.TextChoices):
         UPLOAD = "upload", _("Upload")
@@ -48,6 +54,8 @@ class Lesson(TimeStampedModel):
     description = models.TextField(blank=True)
     content_type = models.CharField(max_length=20, choices=ContentType.choices, default=ContentType.CHARGE)
     source_type = models.CharField(max_length=20, choices=SourceType.choices, default=SourceType.EXTERNAL_LINK)
+    difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.EASY)
+    tags = models.JSONField(default=list, blank=True)
     media_url = models.URLField(max_length=500)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -101,6 +109,27 @@ class Exercise(TimeStampedModel):
         return f"{self.lesson.title} - {self.get_exercise_type_display()}"
 
 
+class ExerciseLine(TimeStampedModel):
+    """Linha individual da sessao estilo karaoke/Guitar Hero."""
+
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name="lines")
+    order = models.PositiveIntegerField(default=1)
+    text_en = models.CharField(max_length=255)
+    text_pt = models.CharField(max_length=255, blank=True)
+    phonetic_hint = models.CharField(max_length=255, blank=True)
+    reference_start_ms = models.PositiveIntegerField(default=0)
+    reference_end_ms = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["exercise", "order"], name="unique_exercise_line_order"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.exercise.lesson.title} [{self.order}]"
+
+
 class Submission(TimeStampedModel):
     """Tentativa enviada pelo aluno para um exercise."""
 
@@ -130,3 +159,33 @@ class Submission(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.student.email} - {self.exercise.lesson.title}"
+
+
+class SubmissionLine(TimeStampedModel):
+    """Resultado por linha dentro de uma tentativa completa."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        MATCHED = "matched", _("Matched")
+        NEEDS_COACHING = "needs_coaching", _("Needs Coaching")
+
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="line_results")
+    exercise_line = models.ForeignKey(
+        ExerciseLine,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submission_lines",
+    )
+    transcript_en = models.TextField(blank=True)
+    accuracy_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    pronunciation_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    wrong_words = models.JSONField(default=list, blank=True)
+    feedback = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+
+    class Meta:
+        ordering = ["submission_id", "id"]
+
+    def __str__(self) -> str:
+        return f"LineResult<{self.submission_id}:{self.exercise_line_id}>"

@@ -6,13 +6,15 @@ Cada router concentra um contexto do sistema para manter o codigo modular.
 
 from ninja import NinjaAPI
 
-from accounts.api import router as auth_router
+from accounts.api import profile_router, router as auth_router
 from learning.api import public_router, submission_router, teacher_router
 
 
 api = NinjaAPI(title="Vibe Studying API", version="0.1.0")
 # Rotas de autenticacao do usuario final.
 api.add_router("/auth", auth_router)
+# Rotas de perfil/onboarding do aluno.
+api.add_router("/profile", profile_router)
 # Rotas publicas do produto.
 api.add_router("", public_router)
 # Rotas restritas ao portal do professor.

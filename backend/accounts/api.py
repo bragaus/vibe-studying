@@ -13,9 +13,12 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from accounts.jwt import JWTError, create_token_pair, decode_jwt, jwt_auth
+from accounts.models import StudentProfile
+from accounts.permissions import require_role
 
 
 router = Router()
+profile_router = Router()
 User = get_user_model()
 
 
@@ -36,6 +39,22 @@ class AuthResponseSchema(Schema):
     user: UserSchema
 
 
+class StudentProfileSchema(Schema):
+    onboarding_completed: bool
+    english_level: str
+    favorite_songs: list[str]
+    favorite_movies: list[str]
+    favorite_series: list[str]
+    favorite_anime: list[str]
+    favorite_artists: list[str]
+    favorite_genres: list[str]
+
+
+class ProfileResponseSchema(Schema):
+    user: UserSchema
+    profile: StudentProfileSchema
+
+
 class RegisterInput(Schema):
     email: str
     password: str
@@ -50,6 +69,16 @@ class LoginInput(Schema):
 
 class RefreshInput(Schema):
     refresh_token: str
+
+
+class ProfileUpdateInput(Schema):
+    english_level: str | None = None
+    favorite_songs: list[str] | None = None
+    favorite_movies: list[str] | None = None
+    favorite_series: list[str] | None = None
+    favorite_anime: list[str] | None = None
+    favorite_artists: list[str] | None = None
+    favorite_genres: list[str] | None = None
 
 
 def serialize_user(user) -> UserSchema:
@@ -69,6 +98,79 @@ def build_auth_response(user) -> AuthResponseSchema:
     return AuthResponseSchema(user=serialize_user(user), **token_pair)
 
 
+def normalize_list(values: list[str] | None) -> list[str]:
+    if not values:
+        return []
+
+    unique_values: list[str] = []
+    seen: set[str] = set()
+    for raw_value in values:
+        clean_value = raw_value.strip()
+        if not clean_value:
+            continue
+
+        lowered = clean_value.lower()
+        if lowered in seen:
+            continue
+
+        seen.add(lowered)
+        unique_values.append(clean_value)
+
+    return unique_values
+
+
+def get_or_create_student_profile(user) -> StudentProfile:
+    profile, _ = StudentProfile.objects.get_or_create(user=user)
+    return profile
+
+
+def serialize_profile(profile: StudentProfile) -> StudentProfileSchema:
+    return StudentProfileSchema(
+        onboarding_completed=profile.onboarding_completed,
+        english_level=profile.english_level,
+        favorite_songs=profile.favorite_songs,
+        favorite_movies=profile.favorite_movies,
+        favorite_series=profile.favorite_series,
+        favorite_anime=profile.favorite_anime,
+        favorite_artists=profile.favorite_artists,
+        favorite_genres=profile.favorite_genres,
+    )
+
+
+def build_profile_response(user) -> ProfileResponseSchema:
+    profile = get_or_create_student_profile(user)
+    return ProfileResponseSchema(user=serialize_user(user), profile=serialize_profile(profile))
+
+
+def update_student_profile(profile: StudentProfile, payload: ProfileUpdateInput, complete_onboarding: bool = False) -> StudentProfile:
+    changes = payload.model_dump(exclude_unset=True)
+
+    list_fields = {
+        "favorite_songs",
+        "favorite_movies",
+        "favorite_series",
+        "favorite_anime",
+        "favorite_artists",
+        "favorite_genres",
+    }
+
+    for field, value in changes.items():
+        if value is None:
+            continue
+
+        if field in list_fields:
+            setattr(profile, field, normalize_list(value))
+            continue
+
+        setattr(profile, field, value)
+
+    if complete_onboarding:
+        profile.onboarding_completed = True
+
+    profile.save()
+    return profile
+
+
 def validate_identity_payload(email: str, password: str) -> None:
     # Reaproveitamos as validacoes nativas do Django em vez de duplicar regra.
     try:
@@ -81,13 +183,16 @@ def validate_identity_payload(email: str, password: str) -> None:
 def create_account(payload: RegisterInput, role: str):
     with transaction.atomic():
         # atomic garante que nada fique salvo pela metade se algo falhar.
-        return User.objects.create_user(
+        user = User.objects.create_user(
             email=payload.email,
             password=payload.password,
             first_name=payload.first_name,
             last_name=payload.last_name,
             role=role,
         )
+        if role == User.Role.STUDENT:
+            StudentProfile.objects.get_or_create(user=user)
+        return user
 
 
 @router.post("/register", response={201: AuthResponseSchema})
@@ -146,3 +251,25 @@ def refresh_token(request, payload: RefreshInput):
 def me(request):
     # request.auth foi preenchido pelo JWTAuth com o usuario autenticado.
     return serialize_user(request.auth)
+
+
+@profile_router.get("/me", auth=jwt_auth, response=ProfileResponseSchema)
+def profile_me(request):
+    require_role(request.auth, request.auth.Role.STUDENT)
+    return build_profile_response(request.auth)
+
+
+@profile_router.put("/me", auth=jwt_auth, response=ProfileResponseSchema)
+def update_profile(request, payload: ProfileUpdateInput):
+    require_role(request.auth, request.auth.Role.STUDENT)
+    profile = get_or_create_student_profile(request.auth)
+    update_student_profile(profile, payload)
+    return build_profile_response(request.auth)
+
+
+@profile_router.post("/onboarding", auth=jwt_auth, response=ProfileResponseSchema)
+def complete_onboarding(request, payload: ProfileUpdateInput):
+    require_role(request.auth, request.auth.Role.STUDENT)
+    profile = get_or_create_student_profile(request.auth)
+    update_student_profile(profile, payload, complete_onboarding=True)
+    return build_profile_response(request.auth)
