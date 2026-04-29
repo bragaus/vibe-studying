@@ -1,12 +1,22 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:vibe_studying_mobile/core/models.dart';
 
 class AppConfig {
-  static const apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
-  );
+  static String get apiBaseUrl {
+    const configuredBaseUrl =
+        String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (configuredBaseUrl.trim().isNotEmpty) {
+      return configuredBaseUrl;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api';
+    }
+
+    return 'http://127.0.0.1:8000/api';
+  }
 }
 
 class SessionStorage {
@@ -17,7 +27,8 @@ class SessionStorage {
   static const _accessTokenKey = 'vibe.access_token';
   static const _refreshTokenKey = 'vibe.refresh_token';
 
-  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> saveTokens(
+      {required String accessToken, required String refreshToken}) async {
     await _storage.write(key: _accessTokenKey, value: accessToken);
     await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }
@@ -48,7 +59,8 @@ class AuthRepository {
 
   final Dio _dio;
 
-  Future<AuthSession> login({required String email, required String password}) async {
+  Future<AuthSession> login(
+      {required String email, required String password}) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/login',
       data: {'email': email, 'password': password},
@@ -154,7 +166,10 @@ class FeedRepository {
     required int exerciseId,
     required List<PracticeLineResult> lineResults,
   }) async {
-    final transcript = lineResults.map((item) => item.transcriptEn).where((item) => item.trim().isNotEmpty).join(' ');
+    final transcript = lineResults
+        .map((item) => item.transcriptEn)
+        .where((item) => item.trim().isNotEmpty)
+        .join(' ');
 
     await _dio.post<void>(
       '/submissions',
