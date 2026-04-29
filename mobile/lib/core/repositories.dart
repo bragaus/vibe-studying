@@ -4,11 +4,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:vibe_studying_mobile/core/models.dart';
 
 class AppConfig {
-  static String get apiBaseUrl {
+  static String get defaultApiBaseUrl {
     const configuredBaseUrl =
         String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (configuredBaseUrl.trim().isNotEmpty) {
-      return configuredBaseUrl;
+      return normalizeApiBaseUrl(configuredBaseUrl);
     }
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
@@ -16,6 +16,51 @@ class AppConfig {
     }
 
     return 'http://127.0.0.1:8000/api';
+  }
+
+  static String normalizeApiBaseUrl(String rawValue) {
+    final trimmed = rawValue.trim();
+    if (trimmed.isEmpty) {
+      return defaultApiBaseUrl;
+    }
+
+    final withScheme = trimmed.contains('://') ? trimmed : 'http://$trimmed';
+    final withoutTrailingSlash = withScheme.endsWith('/')
+        ? withScheme.substring(0, withScheme.length - 1)
+        : withScheme;
+
+    if (withoutTrailingSlash.endsWith('/api')) {
+      return withoutTrailingSlash;
+    }
+
+    return '$withoutTrailingSlash/api';
+  }
+}
+
+class ApiBaseUrlStorage {
+  ApiBaseUrlStorage(this._storage);
+
+  final FlutterSecureStorage _storage;
+
+  static const _apiBaseUrlKey = 'vibe.api_base_url';
+
+  Future<String?> readBaseUrl() async {
+    final value = await _storage.read(key: _apiBaseUrlKey);
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return AppConfig.normalizeApiBaseUrl(value);
+  }
+
+  Future<void> saveBaseUrl(String value) async {
+    await _storage.write(
+      key: _apiBaseUrlKey,
+      value: AppConfig.normalizeApiBaseUrl(value),
+    );
+  }
+
+  Future<void> clear() async {
+    await _storage.delete(key: _apiBaseUrlKey);
   }
 }
 
@@ -198,9 +243,9 @@ String parseApiError(Object error) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'O backend em ${AppConfig.apiBaseUrl} demorou para responder.';
+        return 'O backend em ${error.requestOptions.baseUrl} demorou para responder.';
       case DioExceptionType.connectionError:
-        return 'Nao foi possivel conectar ao backend em ${AppConfig.apiBaseUrl}. Verifique se o servidor esta rodando.';
+        return 'Nao foi possivel conectar ao backend em ${error.requestOptions.baseUrl}. Verifique se o servidor esta rodando.';
       default:
         break;
     }

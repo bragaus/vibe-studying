@@ -5,11 +5,50 @@ import 'package:vibe_studying_mobile/core/models.dart';
 import 'package:vibe_studying_mobile/core/repositories.dart';
 
 final secureStorageProvider = Provider((ref) => const FlutterSecureStorage());
+final apiBaseUrlStorageProvider =
+    Provider((ref) => ApiBaseUrlStorage(ref.watch(secureStorageProvider)));
+
+class ApiBaseUrlController extends StateNotifier<String> {
+  ApiBaseUrlController(this._storage) : super(AppConfig.defaultApiBaseUrl);
+
+  final ApiBaseUrlStorage _storage;
+  bool _loaded = false;
+
+  Future<void> load() async {
+    if (_loaded) {
+      return;
+    }
+
+    final savedValue = await _storage.readBaseUrl();
+    if (savedValue != null) {
+      state = savedValue;
+    }
+    _loaded = true;
+  }
+
+  Future<void> update(String rawValue) async {
+    final normalizedValue = AppConfig.normalizeApiBaseUrl(rawValue);
+    await _storage.saveBaseUrl(normalizedValue);
+    state = normalizedValue;
+    _loaded = true;
+  }
+
+  Future<void> reset() async {
+    await _storage.clear();
+    state = AppConfig.defaultApiBaseUrl;
+    _loaded = true;
+  }
+}
+
+final apiBaseUrlControllerProvider =
+    StateNotifierProvider<ApiBaseUrlController, String>(
+  (ref) => ApiBaseUrlController(ref.watch(apiBaseUrlStorageProvider)),
+);
 
 final dioProvider = Provider(
   (ref) => Dio(
     BaseOptions(
-      baseUrl: AppConfig.apiBaseUrl,
+      baseUrl: ref.watch(apiBaseUrlControllerProvider),
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},

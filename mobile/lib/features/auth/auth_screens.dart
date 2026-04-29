@@ -22,6 +22,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _bootstrap() async {
+    await ref.read(apiBaseUrlControllerProvider.notifier).load();
     final session =
         await ref.read(sessionControllerProvider.notifier).bootstrap();
     if (!mounted) {
@@ -71,6 +72,112 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+Future<void> _showBackendUrlDialog(BuildContext context, WidgetRef ref) async {
+  final currentBaseUrl = ref.read(apiBaseUrlControllerProvider);
+  final controller = TextEditingController(text: currentBaseUrl);
+
+  Future<void> save() async {
+    await ref
+        .read(apiBaseUrlControllerProvider.notifier)
+        .update(controller.text);
+    await ref.read(sessionControllerProvider.notifier).logout();
+    ref.read(profileControllerProvider.notifier).clear();
+  }
+
+  Future<void> reset() async {
+    await ref.read(apiBaseUrlControllerProvider.notifier).reset();
+    await ref.read(sessionControllerProvider.notifier).logout();
+    ref.read(profileControllerProvider.notifier).clear();
+  }
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: AppPalette.panel,
+      title: const Text('Backend URL'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'API base URL',
+                hintText: 'http://192.168.0.10:8000/api',
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Pode ser localhost, IP da rede ou dominio. Se faltar /api, o app completa automaticamente.',
+              style: TextStyle(color: AppPalette.muted, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () async {
+            await reset();
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
+            }
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Backend padrao restaurado: ${ref.read(apiBaseUrlControllerProvider)}',
+                  ),
+                ),
+              );
+            }
+          },
+          child: const Text('Padrao'),
+        ),
+        FilledButton(
+          onPressed: () async {
+            await save();
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
+            }
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Backend atualizado para ${ref.read(apiBaseUrlControllerProvider)}',
+                  ),
+                ),
+              );
+            }
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    ),
+  );
+
+  controller.dispose();
+}
+
+class _BackendConfigButton extends ConsumerWidget {
+  const _BackendConfigButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      tooltip: 'Configurar backend',
+      onPressed: () => _showBackendUrlDialog(context, ref),
+      icon: const Icon(Icons.dns_outlined, color: AppPalette.foreground),
     );
   }
 }
@@ -136,8 +243,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final apiBaseUrl = ref.watch(apiBaseUrlControllerProvider);
+
     return HudScaffold(
       title: 'SYSTEM_LOGIN',
+      actions: const [_BackendConfigButton()],
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -150,6 +260,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const Text(
                       'Acesse o hub do aluno e sincronize seu feed personalizado.'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Backend atual: $apiBaseUrl',
+                    style:
+                        const TextStyle(color: AppPalette.muted, fontSize: 12),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _emailController,
@@ -246,8 +362,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final apiBaseUrl = ref.watch(apiBaseUrlControllerProvider);
+
     return HudScaffold(
       title: 'INITIALIZE_USER',
+      actions: const [_BackendConfigButton()],
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -260,6 +379,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 children: [
                   const Text(
                       'Crie seu perfil de aluno para montar um feed baseado nos seus gostos.'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Backend atual: $apiBaseUrl',
+                    style:
+                        const TextStyle(color: AppPalette.muted, fontSize: 12),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                       controller: _firstNameController,
