@@ -17,7 +17,7 @@ workflows:
       - name: Bootstrap iOS project files
         script: |
           set -e
-          flutter create --platforms=ios .
+          flutter create --platforms=ios --org com.bragaus --no-pub .
       - name: Get Flutter packages
         script: |
           set -e
@@ -34,7 +34,7 @@ workflows:
       - name: Build iOS simulator app
         script: |
           set -e
-          flutter build ios --debug --simulator --dart-define=API_BASE_URL="$API_BASE_URL"
+          flutter build ios --debug --simulator --dart-define=API_BASE_URL="${API_BASE_URL:-https://api.example.com/api}"
     artifacts:
       - mobile/build/ios/iphonesimulator/*.app
       - /tmp/xcodebuild_logs/*.log
