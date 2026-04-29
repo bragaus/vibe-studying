@@ -8,8 +8,6 @@ workflows:
       flutter: stable
       xcode: "16.4"
       cocoapods: default
-      vars:
-        API_BASE_URL: ""
     cache:
       cache_paths:
         - $FLUTTER_ROOT/.pub-cache
