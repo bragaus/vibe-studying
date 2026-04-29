@@ -1,0 +1,42 @@
+workflows:
+  ios-simulator:
+    name: Flutter iOS Simulator
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    working_directory: mobile
+    environment:
+      flutter: stable
+      xcode: "16.4"
+      cocoapods: default
+      vars:
+        API_BASE_URL: ""
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Bootstrap iOS project files
+        script: |
+          set -e
+          flutter create --platforms=ios .
+      - name: Get Flutter packages
+        script: |
+          set -e
+          flutter pub get
+      - name: Install CocoaPods dependencies
+        working_directory: mobile/ios
+        script: |
+          set -e
+          pod install
+      - name: Run Flutter tests
+        script: |
+          set -e
+          flutter test
+      - name: Build iOS simulator app
+        script: |
+          set -e
+          flutter build ios --debug --simulator --dart-define=API_BASE_URL="$API_BASE_URL"
+    artifacts:
+      - mobile/build/ios/iphonesimulator/*.app
+      - /tmp/xcodebuild_logs/*.log

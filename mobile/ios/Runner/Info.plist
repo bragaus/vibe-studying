@@ -24,8 +24,21 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>O app acessa o backend local do Vibe Studying durante testes no iPhone.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O microfone e usado para capturar sua fala e praticar pronuncia nas sessoes estilo karaoke.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>O reconhecimento de fala e usado para comparar sua pronuncia com as frases esperadas.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
