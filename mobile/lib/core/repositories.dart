@@ -193,6 +193,18 @@ String parseApiError(Object error) {
         return detail;
       }
     }
+
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'O backend em ${AppConfig.apiBaseUrl} demorou para responder.';
+      case DioExceptionType.connectionError:
+        return 'Nao foi possivel conectar ao backend em ${AppConfig.apiBaseUrl}. Verifique se o servidor esta rodando.';
+      default:
+        break;
+    }
+
     if (error.message != null && error.message!.trim().isNotEmpty) {
       return error.message!;
     }
