@@ -33,7 +33,8 @@ def env_list(name: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-vibe-studying-secret-key")
 DEBUG = env_bool("DEBUG", default=True)
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver")
+# Por enquanto o backend aceita requests para qualquer host/IP.
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*")
 
 
 INSTALLED_APPS = [
@@ -138,6 +139,9 @@ LOCAL_DEV_ORIGINS = [
     'http://127.0.0.1:8080',
 ]
 
+# Libera CORS para qualquer origem enquanto a API estiver aberta.
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
     ','.join(LOCAL_DEV_ORIGINS),
@@ -147,7 +151,7 @@ CSRF_TRUSTED_ORIGINS = env_list(
     ','.join(LOCAL_DEV_ORIGINS),
 )
 
-if DEBUG:
+if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
     for origin in LOCAL_DEV_ORIGINS:
         if origin not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(origin)
