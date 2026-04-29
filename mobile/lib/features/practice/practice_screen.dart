@@ -71,7 +71,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           lesson.exercise.lines[_currentLineIndex],
           recognizedText: _recognizedText,
           wrongWords: const ['timing'],
-          fallbackMessage: 'A frase cruzou a linha de leitura. Respire, ouça a dica e tente novamente.',
+          fallbackMessage:
+              'A frase cruzou a linha de leitura. Respire, ouça a dica e tente novamente.',
         );
       }
     });
@@ -88,7 +89,9 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final available = await _speech.initialize();
     if (!available || !mounted) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel iniciar o reconhecimento de voz neste dispositivo.')),
+        const SnackBar(
+            content: Text(
+                'Nao foi possivel iniciar o reconhecimento de voz neste dispositivo.')),
       );
       return;
     }
@@ -124,7 +127,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     }
 
     var leadingMatches = 0;
-    while (leadingMatches < spokenWords.length && leadingMatches < targetWords.length) {
+    while (leadingMatches < spokenWords.length &&
+        leadingMatches < targetWords.length) {
       if (spokenWords[leadingMatches] != targetWords[leadingMatches]) {
         break;
       }
@@ -136,13 +140,15 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       return;
     }
 
-    if (spokenWords.length >= targetWords.length && leadingMatches < targetWords.length) {
+    if (spokenWords.length >= targetWords.length &&
+        leadingMatches < targetWords.length) {
       final wrongWord = targetWords[leadingMatches];
       _pauseForCoaching(
         currentLine,
         recognizedText: recognizedText,
         wrongWords: [wrongWord],
-        fallbackMessage: 'A IA detectou um desvio em "$wrongWord". Ajuste a pronuncia antes de continuar.',
+        fallbackMessage:
+            'A IA detectou um desvio em "$wrongWord". Ajuste a pronuncia antes de continuar.',
       );
     }
   }
@@ -155,7 +161,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   ) {
     final targetWords = _normalizeWords(line.textEn);
     final spokenWords = _normalizeWords(recognizedText);
-    final score = ((spokenWords.length / targetWords.length) * 100).clamp(0, 100).round();
+    final score =
+        ((spokenWords.length / targetWords.length) * 100).clamp(0, 100).round();
 
     _results.add(
       PracticeLineResult(
@@ -164,7 +171,11 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         accuracyScore: score,
         pronunciationScore: score,
         wrongWords: wrongWords,
-        feedback: {'coach_message': wrongWords.isEmpty ? 'Linha concluida com sucesso.' : _coachMessage},
+        feedback: {
+          'coach_message': wrongWords.isEmpty
+              ? 'Linha concluida com sucesso.'
+              : _coachMessage
+        },
         status: wrongWords.isEmpty ? 'matched' : 'needs_coaching',
       ),
     );
@@ -242,7 +253,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(parseApiError(error))));
     }
   }
 
@@ -254,13 +266,21 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       title: 'PRACTICE_HUD',
       actions: [
         IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              context.pop();
+              return;
+            }
+            context.go('/feed');
+          },
           icon: const Icon(Icons.close, color: AppPalette.foreground),
         ),
       ],
       child: lessonAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppPalette.neonPink)),
-        error: (error, _) => Center(child: Text('Falha ao carregar lesson: $error')),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: AppPalette.neonPink)),
+        error: (error, _) =>
+            Center(child: Text('Falha ao carregar lesson: $error')),
         data: (lesson) {
           final currentLine = lesson.exercise.lines[_currentLineIndex];
 
@@ -271,7 +291,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(lesson.title, style: Theme.of(context).textTheme.titleLarge),
+                    Text(lesson.title,
+                        style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     Text(lesson.exercise.instructionText),
                     const SizedBox(height: 12),
@@ -279,9 +300,16 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        HudTag(label: lesson.contentType, color: AppPalette.neonPink),
-                        HudTag(label: lesson.difficulty, color: AppPalette.neonCyan),
-                        HudTag(label: 'speed x${_speedMultiplier.toStringAsFixed(2)}', color: AppPalette.neonYellow),
+                        HudTag(
+                            label: lesson.contentType,
+                            color: AppPalette.neonPink),
+                        HudTag(
+                            label: lesson.difficulty,
+                            color: AppPalette.neonCyan),
+                        HudTag(
+                            label:
+                                'speed x${_speedMultiplier.toStringAsFixed(2)}',
+                            color: AppPalette.neonYellow),
                       ],
                     ),
                   ],
@@ -309,7 +337,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                           ),
                           Align(
                             alignment: const Alignment(0, 0.5),
-                            child: Container(height: 2, color: AppPalette.neonCyan.withValues(alpha: 0.8)),
+                            child: Container(
+                                height: 2,
+                                color:
+                                    AppPalette.neonCyan.withValues(alpha: 0.8)),
                           ),
                           Positioned(
                             top: 12 + (_laneProgress * 180),
@@ -319,19 +350,30 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                               duration: const Duration(milliseconds: 100),
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppPalette.neonPink.withValues(alpha: 0.14),
+                                color:
+                                    AppPalette.neonPink.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppPalette.neonPink.withValues(alpha: 0.55)),
+                                border: Border.all(
+                                    color: AppPalette.neonPink
+                                        .withValues(alpha: 0.55)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('LINE ${_currentLineIndex + 1}/${lesson.exercise.lines.length}', style: const TextStyle(color: AppPalette.neonCyan)),
+                                  Text(
+                                      'LINE ${_currentLineIndex + 1}/${lesson.exercise.lines.length}',
+                                      style: const TextStyle(
+                                          color: AppPalette.neonCyan)),
                                   const SizedBox(height: 8),
-                                  Text(currentLine.textEn, style: Theme.of(context).textTheme.titleLarge),
+                                  Text(currentLine.textEn,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge),
                                   if (currentLine.textPt.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    Text(currentLine.textPt, style: const TextStyle(color: AppPalette.muted)),
+                                    Text(currentLine.textPt,
+                                        style: const TextStyle(
+                                            color: AppPalette.muted)),
                                   ],
                                 ],
                               ),
@@ -344,13 +386,17 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                     LinearProgressIndicator(
                       value: (_normalizeWords(currentLine.textEn).isEmpty)
                           ? 0
-                          : (_normalizeWords(_recognizedText).length / _normalizeWords(currentLine.textEn).length).clamp(0, 1),
+                          : (_normalizeWords(_recognizedText).length /
+                                  _normalizeWords(currentLine.textEn).length)
+                              .clamp(0, 1),
                       color: AppPalette.neonPink,
                       backgroundColor: AppPalette.panelSoft,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      _recognizedText.isEmpty ? 'Microfone aguardando fala...' : _recognizedText,
+                      _recognizedText.isEmpty
+                          ? 'Microfone aguardando fala...'
+                          : _recognizedText,
                       style: const TextStyle(color: AppPalette.foreground),
                     ),
                     const SizedBox(height: 16),
@@ -358,7 +404,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                       children: [
                         Expanded(
                           child: NeonButton(
-                            label: _sessionStarted ? 'RESTART_RUN' : 'START_RUN',
+                            label:
+                                _sessionStarted ? 'RESTART_RUN' : 'START_RUN',
                             icon: Icons.play_arrow,
                             onPressed: () => _startSession(lesson),
                           ),
@@ -369,7 +416,9 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                             label: _isListening ? 'STOP_MIC' : 'ACTIVATE_MIC',
                             icon: _isListening ? Icons.mic_off : Icons.mic,
                             isPrimary: false,
-                            onPressed: _sessionStarted ? () => _toggleListening(lesson) : null,
+                            onPressed: _sessionStarted
+                                ? () => _toggleListening(lesson)
+                                : null,
                           ),
                         ),
                       ],
@@ -383,7 +432,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('AI_COACH', style: TextStyle(color: AppPalette.neonYellow, fontWeight: FontWeight.bold)),
+                      const Text('AI_COACH',
+                          style: TextStyle(
+                              color: AppPalette.neonYellow,
+                              fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Text(_coachMessage),
                       const SizedBox(height: 12),

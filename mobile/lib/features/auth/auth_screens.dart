@@ -22,7 +22,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _bootstrap() async {
-    final session = await ref.read(sessionControllerProvider.notifier).bootstrap();
+    final session =
+        await ref.read(sessionControllerProvider.notifier).bootstrap();
     if (!mounted) {
       return;
     }
@@ -37,7 +38,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _routeAfterAuth(AuthSession session) async {
     try {
-      final profile = await ref.read(profileControllerProvider.notifier).load(session.accessToken);
+      final profile = await ref
+          .read(profileControllerProvider.notifier)
+          .load(session.accessToken);
       if (!mounted) {
         return;
       }
@@ -58,7 +61,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('VIBE_STUDYING', style: TextStyle(fontSize: 28, color: AppPalette.foreground, fontWeight: FontWeight.bold)),
+            Text('VIBE_STUDYING',
+                style: TextStyle(
+                    fontSize: 28,
+                    color: AppPalette.foreground,
+                    fontWeight: FontWeight.bold)),
             SizedBox(height: 18),
             CircularProgressIndicator(color: AppPalette.neonPink),
           ],
@@ -99,8 +106,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _submitting = false);
     if (session == null) {
-      final error = ref.read(sessionControllerProvider).errorMessage ?? 'Falha ao autenticar.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      final error = ref.read(sessionControllerProvider).errorMessage ??
+          'Falha ao autenticar.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -109,7 +118,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _routeAfterAuth(AuthSession session) async {
     try {
-      final profile = await ref.read(profileControllerProvider.notifier).load(session.accessToken);
+      final profile = await ref
+          .read(profileControllerProvider.notifier)
+          .load(session.accessToken);
       if (!mounted) {
         return;
       }
@@ -118,7 +129,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(parseApiError(error))));
     }
   }
 
@@ -136,7 +148,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Acesse o hub do aluno e sincronize seu feed personalizado.'),
+                  const Text(
+                      'Acesse o hub do aluno e sincronize seu feed personalizado.'),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _emailController,
@@ -207,13 +220,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _submitting = false);
     if (session == null) {
-      final error = ref.read(sessionControllerProvider).errorMessage ?? 'Falha ao cadastrar.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      final error = ref.read(sessionControllerProvider).errorMessage ??
+          'Falha ao cadastrar.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
     try {
-      await ref.read(profileControllerProvider.notifier).load(session.accessToken);
+      await ref
+          .read(profileControllerProvider.notifier)
+          .load(session.accessToken);
       if (!mounted) {
         return;
       }
@@ -222,7 +239,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(parseApiError(error))));
     }
   }
 
@@ -240,11 +258,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Crie seu perfil de aluno para montar um feed baseado nos seus gostos.'),
+                  const Text(
+                      'Crie seu perfil de aluno para montar um feed baseado nos seus gostos.'),
                   const SizedBox(height: 20),
-                  TextField(controller: _firstNameController, decoration: const InputDecoration(labelText: 'Nome')),
+                  TextField(
+                      controller: _firstNameController,
+                      decoration: const InputDecoration(labelText: 'Nome')),
                   const SizedBox(height: 14),
-                  TextField(controller: _lastNameController, decoration: const InputDecoration(labelText: 'Sobrenome')),
+                  TextField(
+                      controller: _lastNameController,
+                      decoration:
+                          const InputDecoration(labelText: 'Sobrenome')),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _emailController,
@@ -255,9 +279,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Senha'),
+                    decoration: const InputDecoration(
+                      labelText: 'Senha',
+                      helperText: 'Use pelo menos 8 caracteres.',
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   NeonButton(
                     label: _submitting ? 'CRIANDO...' : 'CRIAR_CONTA',
                     icon: Icons.person_add_alt_1,
