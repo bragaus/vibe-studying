@@ -128,8 +128,8 @@ class HudTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.6)),
-        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Text(
         label.toUpperCase(),

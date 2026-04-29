@@ -84,9 +84,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
     final available = await _speech.initialize();
     if (!available || !mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Nao foi possivel iniciar o reconhecimento de voz neste dispositivo.')),
       );
       return;
@@ -94,7 +95,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
     setState(() => _isListening = true);
     await _speech.listen(
-      partialResults: true,
+      listenOptions: stt.SpeechListenOptions(partialResults: true),
       onResult: (result) {
         if (!mounted) {
           return;
@@ -308,7 +309,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                           ),
                           Align(
                             alignment: const Alignment(0, 0.5),
-                            child: Container(height: 2, color: AppPalette.neonCyan.withOpacity(0.8)),
+                            child: Container(height: 2, color: AppPalette.neonCyan.withValues(alpha: 0.8)),
                           ),
                           Positioned(
                             top: 12 + (_laneProgress * 180),
@@ -318,9 +319,9 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                               duration: const Duration(milliseconds: 100),
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppPalette.neonPink.withOpacity(0.14),
+                                color: AppPalette.neonPink.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppPalette.neonPink.withOpacity(0.55)),
+                                border: Border.all(color: AppPalette.neonPink.withValues(alpha: 0.55)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

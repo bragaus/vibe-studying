@@ -63,7 +63,7 @@ class AppTheme {
         ),
         labelStyle: const TextStyle(color: AppPalette.muted),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppPalette.panel,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),

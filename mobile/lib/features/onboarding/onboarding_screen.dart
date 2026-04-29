@@ -92,7 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DropdownButtonFormField<String>(
-                  value: _englishLevel,
+                  initialValue: _englishLevel,
                   items: const [
                     DropdownMenuItem(value: 'beginner', child: Text('Beginner')),
                     DropdownMenuItem(value: 'intermediate', child: Text('Intermediate')),
