@@ -17,7 +17,8 @@ class AppPalette {
 
 class AppTheme {
   static ThemeData dark() {
-    final baseText = GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme);
+    final baseText =
+        GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme);
     final mono = GoogleFonts.jetBrainsMonoTextTheme(baseText);
 
     return ThemeData(

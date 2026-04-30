@@ -127,6 +127,7 @@ class SubmissionLineInput(Schema):
 
 class SubmissionCreateInput(Schema):
     exercise_id: int
+    client_submission_id: str | None = None
     transcript_en: str = ""
     transcript_pt: str = ""
     line_results: list[SubmissionLineInput] | None = None
@@ -144,6 +145,7 @@ class SubmissionLineSchema(Schema):
 
 class SubmissionSchema(Schema):
     id: int
+    client_submission_id: str | None
     status: str
     transcript_en: str
     transcript_pt: str
@@ -277,6 +279,7 @@ def serialize_submission_line(submission_line: SubmissionLine) -> SubmissionLine
 def serialize_submission(submission: Submission) -> SubmissionSchema:
     return SubmissionSchema(
         id=submission.id,
+        client_submission_id=submission.client_submission_id,
         status=submission.status,
         transcript_en=submission.transcript_en,
         transcript_pt=submission.transcript_pt,
@@ -554,9 +557,22 @@ def update_teacher_lesson(request, lesson_id: int, payload: TeacherLessonUpdateI
     return serialize_teacher_lesson(lesson)
 
 
-@submission_router.post("/submissions", auth=jwt_auth, response={201: SubmissionSchema})
+@submission_router.post("/submissions", auth=jwt_auth, response={200: SubmissionSchema, 201: SubmissionSchema})
 def create_submission(request, payload: SubmissionCreateInput):
     require_role(request.auth, request.auth.Role.STUDENT)
+
+    if payload.client_submission_id:
+        existing_submission = (
+            Submission.objects.filter(
+                student=request.auth,
+                client_submission_id=payload.client_submission_id,
+            )
+            .select_related("exercise__lesson")
+            .prefetch_related("line_results")
+            .first()
+        )
+        if existing_submission is not None:
+            return 200, serialize_submission(existing_submission)
 
     exercise = get_object_or_404(
         Exercise.objects.select_related("lesson"),
@@ -568,6 +584,7 @@ def create_submission(request, payload: SubmissionCreateInput):
         submission = Submission.objects.create(
             student=request.auth,
             exercise=exercise,
+            client_submission_id=payload.client_submission_id,
             transcript_en=payload.transcript_en,
             transcript_pt=payload.transcript_pt,
             status=Submission.Status.PENDING,
@@ -582,11 +599,13 @@ def create_submission(request, payload: SubmissionCreateInput):
                 submission=submission,
                 exercise_line=exercise_line,
                 transcript_en=line_result.transcript_en,
-                accuracy_score=line_result.accuracy_score,
-                pronunciation_score=line_result.pronunciation_score,
-                wrong_words=normalize_keyword_list(line_result.wrong_words),
-                feedback=line_result.feedback or {},
-                status=line_result.status,
+                # O cliente pode enviar heuristicas locais, mas o backend so aceita
+                # transcript e vinculacao de linha ate que um processor confiavel rode.
+                accuracy_score=None,
+                pronunciation_score=None,
+                wrong_words=[],
+                feedback={},
+                status=SubmissionLine.Status.PENDING,
             )
 
     submission.refresh_from_db()

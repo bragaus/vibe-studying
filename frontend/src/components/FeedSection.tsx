@@ -10,8 +10,8 @@ const features = [
   },
   {
     icon: Mic,
-    title: "Voz avaliada por IA",
-    desc: "OpenAI Whisper escuta sua pronúncia em tempo real e te dá feedback nível nativo.",
+    title: "Prática guiada por linhas",
+    desc: "A base atual ja suporta exercicios por linha e submissao de tentativas, preparando o caminho para feedback automatizado depois.",
     cls: "border-secondary text-secondary",
   },
   {
@@ -28,8 +28,8 @@ const features = [
   },
   {
     icon: Headphones,
-    title: "Offline-first mobile",
-    desc: "App em Flutter com cache inteligente. Estude no metrô, no avião, no banheiro.",
+    title: "Roadmap offline-first",
+    desc: "O app Flutter ja esta no monorepo com login, onboarding e feed. O proximo passo e fechar cache local e sincronizacao pendente.",
     cls: "border-secondary text-secondary",
   },
   {

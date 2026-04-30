@@ -11,11 +11,11 @@ const faqs = [
   },
   {
     q: "Como funciona a avaliação de pronúncia?",
-    a: "Usamos OpenAI Whisper rodando em pipelines assíncronos no Temporal.io. Você fala a frase do anime/música e em segundos recebe um score fonético detalhado.",
+    a: "Hoje a plataforma ja registra a tentativa e as linhas de pratica. O processamento de feedback automatizado entra na proxima fase, junto com jobs assincronos no backend.",
   },
   {
     q: "Tem app mobile?",
-    a: "Sim — o app Flutter é offline-first. Baixe seu feed pela manhã e estude sem internet o dia inteiro.",
+    a: "Sim. O app Flutter ja cobre login, onboarding, feed personalizado e pratica inicial. A camada offline-first completa esta no roadmap imediato.",
   },
   {
     q: "Vai virar mais um app que esqueço em uma semana?",

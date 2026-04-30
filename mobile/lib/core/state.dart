@@ -7,6 +7,7 @@ import 'package:vibe_studying_mobile/core/repositories.dart';
 final secureStorageProvider = Provider((ref) => const FlutterSecureStorage());
 final apiBaseUrlStorageProvider =
     Provider((ref) => ApiBaseUrlStorage(ref.watch(secureStorageProvider)));
+final localStudyStorageProvider = Provider((ref) => LocalStudyStorage());
 
 class ApiBaseUrlController extends StateNotifier<String> {
   ApiBaseUrlController(this._storage) : super(AppConfig.defaultApiBaseUrl);
@@ -60,10 +61,14 @@ final sessionStorageProvider =
     Provider((ref) => SessionStorage(ref.watch(secureStorageProvider)));
 final authRepositoryProvider =
     Provider((ref) => AuthRepository(ref.watch(dioProvider)));
-final profileRepositoryProvider =
-    Provider((ref) => ProfileRepository(ref.watch(dioProvider)));
-final feedRepositoryProvider =
-    Provider((ref) => FeedRepository(ref.watch(dioProvider)));
+final profileRepositoryProvider = Provider((ref) => ProfileRepository(
+      ref.watch(dioProvider),
+      ref.watch(localStudyStorageProvider),
+    ));
+final feedRepositoryProvider = Provider((ref) => FeedRepository(
+      ref.watch(dioProvider),
+      ref.watch(localStudyStorageProvider),
+    ));
 final profilePhotoPathProvider = StateProvider<String?>((ref) => null);
 
 enum SessionStatus { initial, loading, authenticated, unauthenticated }
@@ -105,7 +110,8 @@ class SessionController extends StateNotifier<SessionState> {
 
   Future<AuthSession?> bootstrap() async {
     state = const SessionState(status: SessionStatus.loading);
-    final (accessToken, refreshToken) = await _sessionStorage.readTokens();
+    final (accessToken, refreshToken, storedUser) =
+        await _sessionStorage.readSessionData();
     if (accessToken == null || refreshToken == null) {
       state = const SessionState(status: SessionStatus.unauthenticated);
       return null;
@@ -118,21 +124,44 @@ class SessionController extends StateNotifier<SessionState> {
       state =
           SessionState(status: SessionStatus.authenticated, session: session);
       return session;
-    } catch (_) {
+    } catch (error) {
+      if (isLikelyOfflineError(error) && storedUser != null) {
+        final offlineSession = AuthSession(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          user: storedUser,
+        );
+        state = SessionState(
+          status: SessionStatus.authenticated,
+          session: offlineSession,
+        );
+        return offlineSession;
+      }
+
       try {
         final refreshedSession = await _authRepository.refresh(refreshToken);
-        await _sessionStorage.saveTokens(
-          accessToken: refreshedSession.accessToken,
-          refreshToken: refreshedSession.refreshToken,
-        );
+        await _sessionStorage.saveSession(refreshedSession);
         state = SessionState(
             status: SessionStatus.authenticated, session: refreshedSession);
         return refreshedSession;
-      } catch (error) {
+      } catch (refreshError) {
+        if (isLikelyOfflineError(refreshError) && storedUser != null) {
+          final offlineSession = AuthSession(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            user: storedUser,
+          );
+          state = SessionState(
+            status: SessionStatus.authenticated,
+            session: offlineSession,
+          );
+          return offlineSession;
+        }
+
         await _sessionStorage.clear();
         state = SessionState(
             status: SessionStatus.unauthenticated,
-            errorMessage: parseApiError(error));
+            errorMessage: parseApiError(refreshError));
         return null;
       }
     }
@@ -144,8 +173,7 @@ class SessionController extends StateNotifier<SessionState> {
     try {
       final session =
           await _authRepository.login(email: email, password: password);
-      await _sessionStorage.saveTokens(
-          accessToken: session.accessToken, refreshToken: session.refreshToken);
+      await _sessionStorage.saveSession(session);
       state =
           SessionState(status: SessionStatus.authenticated, session: session);
       return session;
@@ -171,8 +199,7 @@ class SessionController extends StateNotifier<SessionState> {
         firstName: firstName,
         lastName: lastName,
       );
-      await _sessionStorage.saveTokens(
-          accessToken: session.accessToken, refreshToken: session.refreshToken);
+      await _sessionStorage.saveSession(session);
       state =
           SessionState(status: SessionStatus.authenticated, session: session);
       return session;
@@ -252,9 +279,9 @@ final personalizedFeedProvider =
   if (session == null) {
     throw const ApiException('Sessão não encontrada.');
   }
-  return ref
-      .watch(feedRepositoryProvider)
-      .getPersonalizedFeed(session.accessToken);
+  final repository = ref.watch(feedRepositoryProvider);
+  await repository.syncPendingSubmissions(session.accessToken);
+  return repository.getPersonalizedFeed(session.accessToken);
 });
 
 final lessonDetailProvider =

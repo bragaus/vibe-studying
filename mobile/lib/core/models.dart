@@ -27,6 +27,16 @@ class AppUser {
       role: json['role'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'first_name': firstName,
+      'last_name': lastName,
+      'role': role,
+    };
+  }
 }
 
 class AuthSession {
@@ -46,6 +56,14 @@ class AuthSession {
       refreshToken: json['refresh_token'] as String,
       user: AppUser.fromJson(json['user'] as Map<String, dynamic>),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'access_token': accessToken,
+      'refresh_token': refreshToken,
+      'user': user.toJson(),
+    };
   }
 }
 
@@ -71,7 +89,8 @@ class StudentProfile {
   final List<String> favoriteGenres;
 
   factory StudentProfile.fromJson(Map<String, dynamic> json) {
-    List<String> asStringList(String key) => ((json[key] as List<dynamic>? ?? const [])).cast<String>();
+    List<String> asStringList(String key) =>
+        ((json[key] as List<dynamic>? ?? const [])).cast<String>();
 
     return StudentProfile(
       onboardingCompleted: (json['onboarding_completed'] ?? false) as bool,
@@ -83,6 +102,19 @@ class StudentProfile {
       favoriteArtists: asStringList('favorite_artists'),
       favoriteGenres: asStringList('favorite_genres'),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'onboarding_completed': onboardingCompleted,
+      'english_level': englishLevel,
+      'favorite_songs': favoriteSongs,
+      'favorite_movies': favoriteMovies,
+      'favorite_series': favoriteSeries,
+      'favorite_anime': favoriteAnime,
+      'favorite_artists': favoriteArtists,
+      'favorite_genres': favoriteGenres,
+    };
   }
 }
 
@@ -97,6 +129,13 @@ class ProfileBundle {
       user: AppUser.fromJson(json['user'] as Map<String, dynamic>),
       profile: StudentProfile.fromJson(json['profile'] as Map<String, dynamic>),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      'profile': profile.toJson(),
+    };
   }
 }
 
@@ -142,6 +181,22 @@ class FeedItem {
       matchReason: json['match_reason'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'slug': slug,
+      'title': title,
+      'description': description,
+      'content_type': contentType,
+      'source_type': sourceType,
+      'difficulty': difficulty,
+      'tags': tags,
+      'media_url': mediaUrl,
+      'teacher_name': teacherName,
+      'match_reason': matchReason,
+    };
+  }
 }
 
 class FeedPage {
@@ -157,6 +212,13 @@ class FeedPage {
           .toList(),
       nextCursor: json['next_cursor'] as int?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'items': items.map((item) => item.toJson()).toList(),
+      'next_cursor': nextCursor,
+    };
   }
 }
 
@@ -190,6 +252,18 @@ class ExerciseLineItem {
       referenceEndMs: (json['reference_end_ms'] ?? 0) as int,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'order': order,
+      'text_en': textEn,
+      'text_pt': textPt,
+      'phonetic_hint': phoneticHint,
+      'reference_start_ms': referenceStartMs,
+      'reference_end_ms': referenceEndMs,
+    };
+  }
 }
 
 class ExerciseDetail {
@@ -220,9 +294,22 @@ class ExerciseDetail {
       expectedPhrasePt: json['expected_phrase_pt'] as String,
       maxScore: json['max_score'] as int,
       lines: (json['lines'] as List<dynamic>)
-          .map((item) => ExerciseLineItem.fromJson(item as Map<String, dynamic>))
+          .map(
+              (item) => ExerciseLineItem.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'exercise_type': exerciseType,
+      'instruction_text': instructionText,
+      'expected_phrase_en': expectedPhraseEn,
+      'expected_phrase_pt': expectedPhrasePt,
+      'max_score': maxScore,
+      'lines': lines.map((item) => item.toJson()).toList(),
+    };
   }
 }
 
@@ -253,8 +340,21 @@ class LessonDetail {
       contentType: json['content_type'] as String,
       difficulty: (json['difficulty'] ?? 'easy') as String,
       tags: ((json['tags'] as List<dynamic>? ?? const [])).cast<String>(),
-      exercise: ExerciseDetail.fromJson(json['exercise'] as Map<String, dynamic>),
+      exercise:
+          ExerciseDetail.fromJson(json['exercise'] as Map<String, dynamic>),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'slug': slug,
+      'title': title,
+      'description': description,
+      'content_type': contentType,
+      'difficulty': difficulty,
+      'tags': tags,
+      'exercise': exercise.toJson(),
+    };
   }
 }
 
@@ -288,4 +388,71 @@ class PracticeLineResult {
       'status': status,
     };
   }
+
+  factory PracticeLineResult.fromJson(Map<String, dynamic> json) {
+    return PracticeLineResult(
+      exerciseLineId: json['exercise_line_id'] as int?,
+      transcriptEn: (json['transcript_en'] ?? '') as String,
+      accuracyScore: (json['accuracy_score'] ?? 0) as int,
+      pronunciationScore: (json['pronunciation_score'] ?? 0) as int,
+      wrongWords:
+          ((json['wrong_words'] as List<dynamic>? ?? const [])).cast<String>(),
+      feedback: (json['feedback'] as Map<String, dynamic>? ?? const {}),
+      status: (json['status'] ?? 'pending') as String,
+    );
+  }
+}
+
+class PendingPracticeSubmission {
+  const PendingPracticeSubmission({
+    required this.clientSubmissionId,
+    required this.exerciseId,
+    required this.transcriptEn,
+    required this.transcriptPt,
+    required this.lineResults,
+    required this.createdAt,
+  });
+
+  final String clientSubmissionId;
+  final int exerciseId;
+  final String transcriptEn;
+  final String transcriptPt;
+  final List<PracticeLineResult> lineResults;
+  final String createdAt;
+
+  factory PendingPracticeSubmission.fromJson(Map<String, dynamic> json) {
+    return PendingPracticeSubmission(
+      clientSubmissionId: json['client_submission_id'] as String,
+      exerciseId: json['exercise_id'] as int,
+      transcriptEn: (json['transcript_en'] ?? '') as String,
+      transcriptPt: (json['transcript_pt'] ?? '') as String,
+      lineResults: ((json['line_results'] as List<dynamic>? ?? const []).map(
+              (item) =>
+                  PracticeLineResult.fromJson(item as Map<String, dynamic>)))
+          .toList(),
+      createdAt:
+          (json['created_at'] ?? DateTime.now().toIso8601String()) as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'client_submission_id': clientSubmissionId,
+      'exercise_id': exerciseId,
+      'transcript_en': transcriptEn,
+      'transcript_pt': transcriptPt,
+      'line_results': lineResults.map((item) => item.toJson()).toList(),
+      'created_at': createdAt,
+    };
+  }
+}
+
+class SubmissionDispatchResult {
+  const SubmissionDispatchResult({
+    required this.queuedOffline,
+    required this.clientSubmissionId,
+  });
+
+  final bool queuedOffline;
+  final String clientSubmissionId;
 }

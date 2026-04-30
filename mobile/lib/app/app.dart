@@ -15,13 +15,19 @@ class VibeStudyingApp extends StatelessWidget {
       initialLocation: '/',
       routes: [
         GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-        GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-        GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-        GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+        GoRoute(
+            path: '/login', builder: (context, state) => const LoginScreen()),
+        GoRoute(
+            path: '/register',
+            builder: (context, state) => const RegisterScreen()),
+        GoRoute(
+            path: '/onboarding',
+            builder: (context, state) => const OnboardingScreen()),
         GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
         GoRoute(
           path: '/practice/:slug',
-          builder: (context, state) => PracticeScreen(lessonSlug: state.pathParameters['slug']!),
+          builder: (context, state) =>
+              PracticeScreen(lessonSlug: state.pathParameters['slug']!),
         ),
       ],
     );

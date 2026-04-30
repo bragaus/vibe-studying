@@ -28,13 +28,23 @@ O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entre
 - detalhe de lesson com exercise vinculado
 - criação e edição de lessons pelo professor
 - envio e consulta de submissions pelo aluno
+- captura real de waitlist pela landing pública
+- app mobile Flutter versionado no monorepo com login, onboarding, feed personalizado e prática inicial
+- cache local inicial e fila offline de tentativas no mobile
+- base de Docker e CI para backend/frontend
 - testes básicos no backend e no frontend
 
 ## Status Atual
 
-- O que está implementado no código: landing page, tela de autenticação, API em Django Ninja, domínio de learning, JWT e testes principais.
-- O que aparece como visão de produto na interface: IA de pronúncia, app Flutter e workflows assíncronos.
-- O que ainda não está implementado neste repositório: pipeline real de IA, app mobile versionado aqui e orquestração com Temporal.
+- O que está implementado no código: landing page web, autenticação, API em Django Ninja, waitlist pública, perfil do aluno, feed personalizado, domínio de learning, app mobile Flutter inicial, cache offline básico no mobile e testes principais do backend.
+- O que já existe apenas de forma parcial: SEO básico da landing, portal autenticado web, prática mobile, sincronização pendente do mobile e pipeline de distribuição do app.
+- O que ainda não está implementado neste repositório: e-mails assíncronos reais, scheduler de lembretes, pipeline real de IA, monitoramento robusto e automações avançadas de produção.
+
+## Documentação Base
+
+- `PRD.md`: visão de produto, escopo, riscos e fases de execução
+- `TechSpecs.md`: decisões técnicas e direção principal do app mobile
+- `backend/README.md`: enunciado original do desafio
 
 ## Stack
 
@@ -42,6 +52,7 @@ O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entre
 | --- | --- |
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui e Framer Motion |
 | Backend | Django 6, Django Ninja e JWT customizado |
+| Mobile | Flutter, Riverpod, Go Router, Dio e Secure Storage |
 | Banco | PostgreSQL |
 | Testes | Vitest, Testing Library e Django TestCase |
 | UX | Visual cyberpunk, alto contraste e linguagem inspirada em HUD/feed |
@@ -50,14 +61,15 @@ O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entre
 
 ```mermaid
 flowchart LR
-    A[Landing + Auth<br/>React/Vite] --> B[API /api<br/>Django Ninja]
-    B --> C[Accounts]
-    B --> D[Learning]
-    C --> E[(PostgreSQL)]
-    D --> E
-    D --> F[Lessons]
-    D --> G[Exercises]
-    D --> H[Submissions]
+    A[Landing + Auth<br/>React/Vite] --> C[API /api<br/>Django Ninja]
+    B[App Student<br/>Flutter] --> C
+    C --> D[Accounts]
+    C --> E[Learning]
+    D --> F[(PostgreSQL)]
+    E --> F
+    E --> G[Lessons]
+    E --> H[Exercises]
+    E --> I[Submissions]
 ```
 
 ## Fluxo Principal
@@ -85,6 +97,13 @@ flowchart LR
 │   │   ├── lib/
 │   │   └── test/
 │   └── package.json
+├── mobile/
+│   ├── lib/
+│   ├── android/
+│   ├── ios/
+│   └── pubspec.yaml
+├── PRD.md
+├── TechSpecs.md
 └── README.md
 ```
 
@@ -136,6 +155,21 @@ npm run dev
 
 Aplicação web disponível em `http://localhost:8080` ou na porta informada pelo Vite.
 
+### Docker Compose
+
+Para subir a stack local com Postgres, Redis, backend e frontend:
+
+```bash
+docker compose up --build
+```
+
+Serviços esperados:
+
+- frontend em `http://localhost:8080`
+- backend em `http://localhost:8000/api`
+- PostgreSQL em `localhost:5432`
+- Redis em `localhost:6379`
+
 ## Variáveis de Ambiente
 
 ### Backend
@@ -155,6 +189,10 @@ Aplicação web disponível em `http://localhost:8080` ou na porta informada pel
 | `JWT_SECRET_KEY` | Chave para assinatura dos tokens |
 | `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Duração do access token |
 | `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Duração do refresh token |
+| `ENABLE_PUBLIC_TEACHER_SIGNUP` | Habilita ou bloqueia cadastro público de professor |
+| `EMAIL_BACKEND` | Backend de e-mail do Django |
+| `DEFAULT_FROM_EMAIL` | Remetente padrão |
+| `LOG_LEVEL` | Nível de log raiz |
 
 ### Frontend
 
@@ -174,6 +212,7 @@ Aplicação web disponível em `http://localhost:8080` ou na porta informada pel
 | `POST` | `/api/auth/login` | Login |
 | `POST` | `/api/auth/refresh` | Renovação de token |
 | `GET` | `/api/auth/me` | Perfil autenticado |
+| `POST` | `/api/waitlist` | Captura de e-mail da landing |
 | `GET` | `/api/feed` | Feed público de lessons |
 | `GET` | `/api/lessons/{slug}` | Detalhe de uma lesson |
 | `GET` | `/api/teacher/lessons` | Lista de lessons do professor |
@@ -202,12 +241,12 @@ npm run test
 
 ## Roadmap
 
-- avaliação automatizada de pronúncia com pipeline real de IA
-- roteamento completo do portal autenticado no frontend
-- app Flutter offline-first integrado ao backend
-- processamento assíncrono para correções e distribuição de conteúdo
-- observabilidade, deploy e CI/CD
+- endurecimento de segurança e contratos do backend
+- SEO básico completo e alinhamento do frontend ao estado real do produto
+- app Flutter offline-first com cache local inicial e fila de sincronização
+- processamento assíncrono para e-mails, lembretes e futuras correções
+- observabilidade, deploy, Docker e CI/CD
 
 ## Nota
 
-Este README descreve o estado atual do código. A identidade visual da landing page comunica uma visão de produto maior do que o MVP implementado hoje, e isso foi mantido intencionalmente para apresentar o potencial da plataforma sem mascarar o escopo real já entregue.
+Este README descreve o estado atual do código. A identidade visual da landing page ainda comunica uma visão de produto maior do que o MVP técnico já fechado; por isso, a documentação de produto e arquitetura passa a ser a referência principal para separar visão, base implementada e próximas entregas.

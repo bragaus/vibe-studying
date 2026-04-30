@@ -31,10 +31,13 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-vibe-studying-secret-key")
-DEBUG = env_bool("DEBUG", default=True)
+DEBUG = env_bool("DEBUG", default=False)
 
-# Por enquanto o backend aceita requests para qualquer host/IP.
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*")
+LOCAL_DEV_HOSTS = ["localhost", "127.0.0.1", "testserver"]
+ALLOWED_HOSTS = env_list(
+    "ALLOWED_HOSTS",
+    ",".join(LOCAL_DEV_HOSTS if DEBUG else []),
+)
 
 
 INSTALLED_APPS = [
@@ -139,8 +142,8 @@ LOCAL_DEV_ORIGINS = [
     'http://127.0.0.1:8080',
 ]
 
-# Libera CORS para qualquer origem enquanto a API estiver aberta.
-CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+# Em desenvolvimento local podemos liberar tudo; em qualquer outro caso o default e fechado.
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=DEBUG)
 
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
@@ -163,3 +166,48 @@ JWT_ALGORITHM = 'HS256'
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
 JWT_ACCESS_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '60'))
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '7'))
+
+# O cadastro publico de professor fica habilitado no ambiente de desenvolvimento,
+# mas deve ser fechado explicitamente fora dele.
+ENABLE_PUBLIC_TEACHER_SIGNUP = env_bool('ENABLE_PUBLIC_TEACHER_SIGNUP', default=DEBUG)
+
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vibestudying.local')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': os.getenv('LOG_LEVEL', 'INFO'),
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_REQUEST_LOG_LEVEL', 'WARNING'),
+            'propagate': False,
+        },
+        'accounts': {
+            'handlers': ['console'],
+            'level': os.getenv('APP_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'learning': {
+            'handlers': ['console'],
+            'level': os.getenv('APP_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}

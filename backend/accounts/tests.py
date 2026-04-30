@@ -1,6 +1,6 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from accounts.models import StudentProfile, User
+from accounts.models import StudentProfile, User, WaitlistSignup
 
 
 class AuthApiTests(TestCase):
@@ -59,6 +59,22 @@ class AuthApiTests(TestCase):
         self.assertIn("access_token", response.json())
         self.assertTrue(User.objects.filter(email="teacher@example.com", role=User.Role.TEACHER).exists())
 
+    @override_settings(ENABLE_PUBLIC_TEACHER_SIGNUP=False)
+    def test_teacher_signup_can_be_disabled_by_environment(self):
+        response = self.client.post(
+            "/api/auth/register/teacher",
+            data={
+                "email": "blocked-teacher@example.com",
+                "password": "StrongPass123!",
+                "first_name": "Tea",
+                "last_name": "Cher",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(User.objects.filter(email="blocked-teacher@example.com").exists())
+
     def test_student_can_fetch_and_complete_profile_onboarding(self):
         register_response = self.client.post(
             "/api/auth/register",
@@ -101,3 +117,33 @@ class AuthApiTests(TestCase):
         profile = StudentProfile.objects.get(user__email="profile@example.com")
         self.assertTrue(profile.onboarding_completed)
         self.assertEqual(profile.favorite_artists, ["Linkin Park"])
+
+    def test_public_waitlist_endpoint_creates_and_deduplicates_signup(self):
+        first_response = self.client.post(
+            "/api/waitlist",
+            data={"email": "Lead@example.com", "source": "landing"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertFalse(first_response.json()["already_registered"])
+
+        second_response = self.client.post(
+            "/api/waitlist",
+            data={"email": "lead@example.com", "source": "hero_cta"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(second_response.status_code, 200)
+        self.assertTrue(second_response.json()["already_registered"])
+        self.assertEqual(WaitlistSignup.objects.count(), 1)
+        self.assertEqual(WaitlistSignup.objects.get().source, "hero_cta")
+
+    def test_waitlist_rejects_invalid_email(self):
+        response = self.client.post(
+            "/api/waitlist",
+            data={"email": "not-an-email"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)

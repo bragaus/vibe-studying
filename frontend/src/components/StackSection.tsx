@@ -1,9 +1,9 @@
 const stack = [
   { layer: "BACKEND", name: "Django + Django Ninja", note: "API tipada e veloz", cls: "text-primary" },
-  { layer: "WEB / SaaS", name: "Next.js (React)", note: "SSR, SEO e performance", cls: "text-secondary" },
-  { layer: "MOBILE", name: "Flutter", note: "Offline-first, UI fluida", cls: "text-neon-yellow" },
-  { layer: "WORKFLOWS", name: "Temporal.io", note: "Processamento assíncrono", cls: "text-neon-purple" },
-  { layer: "IA / VOZ", name: "OpenAI Whisper", note: "Pronúncia em tempo real", cls: "text-primary" },
+  { layer: "WEB", name: "React + Vite", note: "Landing e auth web atuais", cls: "text-secondary" },
+  { layer: "MOBILE", name: "Flutter", note: "Aluno, onboarding e feed", cls: "text-neon-yellow" },
+  { layer: "DADOS", name: "PostgreSQL", note: "Fonte principal de dados", cls: "text-neon-purple" },
+  { layer: "ROADMAP", name: "Redis + Workers", note: "Assincronia, cache e jobs", cls: "text-primary" },
 ];
 
 const StackSection = () => {
@@ -17,8 +17,8 @@ const StackSection = () => {
             Construído para <span className="text-gradient-vibe">escalar a vibe.</span>
           </h2>
           <p className="text-muted-foreground text-lg">
-            Stack moderna, tipada e assíncrona. Da API de baixa latência ao app mobile offline-first —
-            cada camada otimizada para entregar microlearning sem fricção.
+            Stack real do monorepo atual, com base pronta para evoluir em direcao a offline-first,
+            jobs assincronos e distribuicao mais robusta.
           </p>
         </div>
 

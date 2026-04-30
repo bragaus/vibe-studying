@@ -2,17 +2,49 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
+import { getApiBaseUrl } from "@/lib/auth";
+
+const API_BASE_URL = getApiBaseUrl();
+
 const CTASection = () => {
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@")) {
       toast.error("ERR :: email inválido");
       return;
     }
-    toast.success("BEM-VINDO À VIBE", { description: `${email} entrou na waitlist.` });
-    setEmail("");
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "landing_cta" }),
+      });
+      const payload = (await response.json()) as { detail?: string; already_registered?: boolean };
+
+      if (!response.ok) {
+        throw new Error(payload.detail || "Nao foi possivel entrar na waitlist.");
+      }
+
+      toast.success(
+        payload.already_registered ? "JA ESTAVA NA WAITLIST" : "BEM-VINDO A VIBE",
+        {
+          description: payload.already_registered
+            ? `${email} ja estava registrado e foi mantido na fila.`
+            : `${email} entrou na waitlist com sucesso.`,
+        },
+      );
+      setEmail("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao registrar e-mail.";
+      toast.error(`ERR :: ${message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -44,9 +76,10 @@ const CTASection = () => {
           />
           <button
             type="submit"
+            disabled={isSubmitting}
             className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono-vibe text-sm px-6 py-4 hover:scale-[1.02] transition-transform glow-pink"
           >
-            ENTRAR <ArrowRight className="h-4 w-4" />
+            {isSubmitting ? "ENVIANDO" : "ENTRAR"} <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       </div>
