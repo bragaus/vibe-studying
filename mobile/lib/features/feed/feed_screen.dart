@@ -50,33 +50,25 @@ class FeedScreen extends ConsumerWidget {
     return HudScaffold(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Vibe_Studying',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-                _ProfilePhotoButton(
-                  imagePath: profilePhotoPath,
-                  onPressed: () => _pickProfilePhoto(context, ref),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () async {
-                    await ref.read(sessionControllerProvider.notifier).logout();
-                    ref.read(profileControllerProvider.notifier).clear();
-                    if (context.mounted) {
-                      context.go('/login');
-                    }
-                  },
-                  icon: const Icon(Icons.logout, color: AppPalette.foreground),
-                ),
-              ],
-            ),
+          HudHeaderBar(
+            title: 'Vibe_Studying',
+            actions: [
+              _ProfilePhotoButton(
+                imagePath: profilePhotoPath,
+                onPressed: () => _pickProfilePhoto(context, ref),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () async {
+                  await ref.read(sessionControllerProvider.notifier).logout();
+                  ref.read(profileControllerProvider.notifier).clear();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+                icon: const Icon(Icons.logout, color: AppPalette.foreground),
+              ),
+            ],
           ),
           Expanded(
             child: RefreshIndicator(

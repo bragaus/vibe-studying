@@ -246,7 +246,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final apiBaseUrl = ref.watch(apiBaseUrlControllerProvider);
 
     return HudScaffold(
-      title: 'SYSTEM_LOGIN',
+      title: 'Entrar na vibe',
       actions: const [_BackendConfigButton()],
       child: Padding(
         padding: const EdgeInsets.all(20),

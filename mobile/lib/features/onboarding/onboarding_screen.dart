@@ -131,7 +131,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           const HudPanel(
             child: Text(
-                'Precisamos conhecer o aluno. Esse onboarding alimenta o ranking do feed personalizado e escolhe as frases que vao descer na pratica.'),
+                'Conta pra gente o que faz sua energia bater alto. Com a sua vibe no radar, o feed fica muito mais insano e a pratica vem na sua pegada.'),
           ),
           const SizedBox(height: 16),
           HudPanel(

@@ -31,21 +31,7 @@ class HudScaffold extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              if (title != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title!,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                      ),
-                      ...?actions,
-                    ],
-                  ),
-                ),
+              if (title != null) HudHeaderBar(title: title!, actions: actions),
               Expanded(child: child),
             ],
           ),
@@ -55,8 +41,52 @@ class HudScaffold extends StatelessWidget {
   }
 }
 
+class HudHeaderBar extends StatelessWidget {
+  const HudHeaderBar({
+    super.key,
+    required this.title,
+    this.actions,
+  });
+
+  final String title;
+  final List<Widget>? actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final headerActions = actions ?? const <Widget>[];
+    final actionSlotWidth = headerActions.length * 56.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      child: Row(
+        children: [
+          SizedBox(width: actionSlotWidth),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+          ),
+          SizedBox(
+            width: actionSlotWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child:
+                  Row(mainAxisSize: MainAxisSize.min, children: headerActions),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class HudPanel extends StatelessWidget {
-  const HudPanel({super.key, required this.child, this.padding = const EdgeInsets.all(18)});
+  const HudPanel(
+      {super.key,
+      required this.child,
+      this.padding = const EdgeInsets.all(18)});
 
   final Widget child;
   final EdgeInsets padding;
@@ -95,7 +125,8 @@ class NeonButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final background = isPrimary ? AppPalette.neonPink : Colors.transparent;
-    final foreground = isPrimary ? AppPalette.background : AppPalette.foreground;
+    final foreground =
+        isPrimary ? AppPalette.background : AppPalette.foreground;
     final borderColor = isPrimary ? AppPalette.neonPink : AppPalette.neonCyan;
 
     return SizedBox(
@@ -107,7 +138,8 @@ class NeonButton extends StatelessWidget {
           foregroundColor: foreground,
           side: BorderSide(color: borderColor),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
         label: Text(label),
@@ -117,7 +149,8 @@ class NeonButton extends StatelessWidget {
 }
 
 class HudTag extends StatelessWidget {
-  const HudTag({super.key, required this.label, this.color = AppPalette.neonCyan});
+  const HudTag(
+      {super.key, required this.label, this.color = AppPalette.neonCyan});
 
   final String label;
   final Color color;
