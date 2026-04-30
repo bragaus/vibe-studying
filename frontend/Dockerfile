@@ -2,7 +2,7 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-ARG VITE_API_URL=http://localhost:8000/api
+ARG VITE_API_URL=https://backendvibestudying.planoartistico.com/api
 ARG VITE_ANDROID_APP_URL=
 ARG VITE_FLUTTER_ANDROID_URL=
 

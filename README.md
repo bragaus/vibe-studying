@@ -126,7 +126,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-API disponível em `http://localhost:8000/api`.
+API disponível em `https://backendvibestudying.planoartistico.com/api`.
 
 Se quiser verificar rapidamente se a API subiu, use `GET /api/health`.
 
@@ -140,7 +140,7 @@ Requisitos:
 Crie um arquivo `.env` dentro de `frontend/` com:
 
 ```env
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=https://backendvibestudying.planoartistico.com/api
 VITE_ANDROID_APP_URL=
 VITE_FLUTTER_ANDROID_URL=
 ```
@@ -166,7 +166,7 @@ docker compose up --build
 Serviços esperados:
 
 - frontend em `http://localhost:8080`
-- backend em `http://localhost:8000/api`
+- backend em `https://backendvibestudying.planoartistico.com/api`
 - PostgreSQL em `localhost:5432`
 - Redis em `localhost:6379`
 

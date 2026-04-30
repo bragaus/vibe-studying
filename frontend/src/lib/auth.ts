@@ -40,7 +40,7 @@ function readStoredUser(rawUser: string | null): SessionUser | null {
 }
 
 export function getApiBaseUrl() {
-  return (import.meta.env.VITE_API_URL || "http://localhost:8000/api").replace(/\/$/, "");
+  return (import.meta.env.VITE_API_URL || "https://backendvibestudying.planoartistico.com/api").replace(/\/$/, "");
 }
 
 export function persistSession(payload: AuthResponsePayload) {

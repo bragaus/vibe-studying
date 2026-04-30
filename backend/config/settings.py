@@ -33,10 +33,12 @@ def env_list(name: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-vibe-studying-secret-key")
 DEBUG = env_bool("DEBUG", default=False)
 
+PUBLIC_API_HOST = "backendvibestudying.planoartistico.com"
+PUBLIC_API_ORIGIN = f"https://{PUBLIC_API_HOST}"
 LOCAL_DEV_HOSTS = ["localhost", "127.0.0.1", "testserver"]
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    ",".join(LOCAL_DEV_HOSTS if DEBUG else []),
+    ",".join([PUBLIC_API_HOST, *LOCAL_DEV_HOSTS]),
 )
 
 
@@ -141,9 +143,10 @@ LOCAL_DEV_ORIGINS = [
     'http://localhost:8080',
     'http://127.0.0.1:8080',
 ]
+DEFAULT_CSRF_TRUSTED_ORIGINS = [PUBLIC_API_ORIGIN, *LOCAL_DEV_ORIGINS]
 
-# Em desenvolvimento local podemos liberar tudo; em qualquer outro caso o default e fechado.
-CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=DEBUG)
+# O backend precisa aceitar qualquer origem para o frontend publicado e futuros clientes.
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)
 
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
@@ -151,7 +154,7 @@ CORS_ALLOWED_ORIGINS = env_list(
 )
 CSRF_TRUSTED_ORIGINS = env_list(
     'CSRF_TRUSTED_ORIGINS',
-    ','.join(LOCAL_DEV_ORIGINS),
+    ','.join(DEFAULT_CSRF_TRUSTED_ORIGINS),
 )
 
 if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
@@ -160,6 +163,9 @@ if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(origin)
         if origin not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(origin)
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = env_bool('USE_X_FORWARDED_HOST', default=True)
 
 JWT_ALGORITHM = 'HS256'
 # O JWT usa uma chave dedicada, mas cai na SECRET_KEY se nao houver outra definida.

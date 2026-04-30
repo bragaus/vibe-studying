@@ -33,7 +33,7 @@ jobs:
     env:
       DEBUG: 'True'
       SECRET_KEY: test-secret
-      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      ALLOWED_HOSTS: backendvibestudying.planoartistico.com,localhost,127.0.0.1,testserver
       CORS_ALLOW_ALL_ORIGINS: 'True'
       DATABASE_NAME: vibe_studying
       DATABASE_USER: postgres
@@ -83,5 +83,5 @@ jobs:
 
       - name: Build frontend
         env:
-          VITE_API_URL: http://localhost:8000/api
+          VITE_API_URL: https://backendvibestudying.planoartistico.com/api
         run: npm run build
