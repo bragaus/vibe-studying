@@ -8,6 +8,8 @@ Separacao atual:
 
 from datetime import datetime
 
+from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -23,6 +25,8 @@ from learning.models import Exercise, ExerciseLine, Lesson, Submission, Submissi
 public_router = Router()
 teacher_router = Router()
 submission_router = Router()
+
+CONTENT_CACHE_VERSION_KEY = "learning:content-cache-version"
 
 
 class ExerciseLineSchema(Schema):
@@ -162,6 +166,33 @@ class SubmissionSchema(Schema):
 
 def normalize_keyword(value: str) -> str:
     return " ".join(value.lower().strip().split())
+
+
+def get_content_cache_version() -> int:
+    cache_version = cache.get(CONTENT_CACHE_VERSION_KEY)
+    if cache_version is None:
+        cache.set(CONTENT_CACHE_VERSION_KEY, 1, timeout=None)
+        return 1
+    return int(cache_version)
+
+
+def bump_content_cache_version() -> int:
+    current_version = get_content_cache_version()
+    next_version = current_version + 1
+    cache.set(CONTENT_CACHE_VERSION_KEY, next_version, timeout=None)
+    return next_version
+
+
+def build_public_feed_cache_key(cursor: int | None, limit: int) -> str:
+    return f"learning:feed:v{get_content_cache_version()}:cursor:{cursor or 'start'}:limit:{limit}"
+
+
+def build_lesson_detail_cache_key(slug: str) -> str:
+    return f"learning:lesson:v{get_content_cache_version()}:slug:{slug}"
+
+
+def invalidate_public_learning_cache() -> None:
+    bump_content_cache_version()
 
 
 def normalize_keyword_list(values: list[str] | None) -> list[str]:
@@ -407,6 +438,11 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     if limit < 1 or limit > 50:
         raise HttpError(400, "Limit must be between 1 and 50.")
 
+    cache_key = build_public_feed_cache_key(cursor, limit)
+    cached_response = cache.get(cache_key)
+    if cached_response is not None:
+        return FeedResponseSchema.model_validate(cached_response)
+
     queryset = Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher")
     if cursor is not None:
         queryset = queryset.filter(id__lt=cursor)
@@ -416,10 +452,12 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     lessons = lessons[:limit]
     next_cursor = lessons[-1].id if has_more and lessons else None
 
-    return FeedResponseSchema(
+    response = FeedResponseSchema(
         items=[serialize_lesson_feed_item(lesson) for lesson in lessons],
         next_cursor=next_cursor,
     )
+    cache.set(cache_key, response.model_dump(mode="json"), timeout=settings.PUBLIC_FEED_CACHE_TIMEOUT_SECONDS)
+    return response
 
 
 @public_router.get("/feed/personalized", auth=jwt_auth, response=FeedResponseSchema)
@@ -452,11 +490,18 @@ def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
 
 @public_router.get("/lessons/{slug}", response=LessonDetailSchema)
 def get_lesson_detail(request, slug: str):
+    cache_key = build_lesson_detail_cache_key(slug)
+    cached_response = cache.get(cache_key)
+    if cached_response is not None:
+        return LessonDetailSchema.model_validate(cached_response)
+
     lesson = get_object_or_404(
         Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher", "exercise").prefetch_related("exercise__lines"),
         slug=slug,
     )
-    return serialize_lesson_detail(lesson)
+    response = serialize_lesson_detail(lesson)
+    cache.set(cache_key, response.model_dump(mode="json"), timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS)
+    return response
 
 
 @teacher_router.get("/lessons", auth=jwt_auth, response=list[TeacherLessonSchema])
@@ -501,6 +546,8 @@ def create_teacher_lesson(request, payload: TeacherLessonInput):
             max_score=payload.max_score,
         )
         sync_exercise_lines(exercise, payload.line_items)
+
+        transaction.on_commit(invalidate_public_learning_cache)
 
     lesson.refresh_from_db()
     return 201, serialize_teacher_lesson(lesson)
@@ -552,6 +599,8 @@ def update_teacher_lesson(request, lesson_id: int, payload: TeacherLessonUpdateI
         exercise.save()
         if "line_items" in changes:
             sync_exercise_lines(exercise, line_items)
+
+        transaction.on_commit(invalidate_public_learning_cache)
 
     lesson.refresh_from_db()
     return serialize_teacher_lesson(lesson)

@@ -35,11 +35,73 @@ services:
       JWT_SECRET_KEY: change-me-too
       ENABLE_PUBLIC_TEACHER_SIGNUP: 'True'
       USE_X_FORWARDED_HOST: 'True'
+      PUBLIC_WEB_URL: https://vibestudying.app
+      RUNTIME_ENVIRONMENT: docker
+      REDIS_URL: redis://redis:6379/0
+      CACHE_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+      ALERT_EMAIL_RECIPIENTS: ops@example.com
     depends_on:
       - db
       - redis
     ports:
       - '8000:8000'
+
+  worker:
+    build:
+      context: ./backend
+    command: celery -A config worker -l info
+    environment:
+      DEBUG: 'True'
+      SECRET_KEY: change-me
+      ALLOWED_HOSTS: backendvibestudying.planoartistico.com,localhost,127.0.0.1
+      CORS_ALLOW_ALL_ORIGINS: 'True'
+      DATABASE_NAME: vibe_studying
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: db
+      DATABASE_PORT: '5432'
+      JWT_SECRET_KEY: change-me-too
+      REDIS_URL: redis://redis:6379/0
+      CACHE_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+      PUBLIC_WEB_URL: https://vibestudying.app
+      RUNTIME_ENVIRONMENT: docker
+      ALERT_EMAIL_RECIPIENTS: ops@example.com
+    depends_on:
+      - db
+      - redis
+
+  beat:
+    build:
+      context: ./backend
+    command: celery -A config beat -l info
+    environment:
+      DEBUG: 'True'
+      SECRET_KEY: change-me
+      ALLOWED_HOSTS: backendvibestudying.planoartistico.com,localhost,127.0.0.1
+      CORS_ALLOW_ALL_ORIGINS: 'True'
+      DATABASE_NAME: vibe_studying
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: db
+      DATABASE_PORT: '5432'
+      JWT_SECRET_KEY: change-me-too
+      REDIS_URL: redis://redis:6379/0
+      CACHE_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+      PUBLIC_WEB_URL: https://vibestudying.app
+      RUNTIME_ENVIRONMENT: docker
+      ALERT_EMAIL_RECIPIENTS: ops@example.com
+    depends_on:
+      - db
+      - redis
 
   frontend:
     build:

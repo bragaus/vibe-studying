@@ -11,6 +11,8 @@ Obs: O frontend nunca toca neste arquivo.
 
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,10 +59,12 @@ INSTALLED_APPS = [
     # Apps de dominio do projeto.
     'accounts',
     'learning',
+    'operations',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'config.middleware.RequestIdMiddleware',
     # CORS precisa entrar cedo para adicionar os headers corretos na resposta.
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -167,6 +171,9 @@ if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = env_bool('USE_X_FORWARDED_HOST', default=True)
 
+PUBLIC_WEB_URL = os.getenv('PUBLIC_WEB_URL', 'https://vibestudying.app')
+RUNTIME_ENVIRONMENT = os.getenv('RUNTIME_ENVIRONMENT', 'development' if DEBUG else 'production')
+
 JWT_ALGORITHM = 'HS256'
 # O JWT usa uma chave dedicada, mas cai na SECRET_KEY se nao houver outra definida.
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
@@ -179,20 +186,86 @@ ENABLE_PUBLIC_TEACHER_SIGNUP = env_bool('ENABLE_PUBLIC_TEACHER_SIGNUP', default=
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vibestudying.local')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', default=False)
+
+REDIS_URL = os.getenv('REDIS_URL', '')
+CACHE_URL = os.getenv('CACHE_URL', REDIS_URL)
+CACHE_DEFAULT_TIMEOUT_SECONDS = int(os.getenv('CACHE_DEFAULT_TIMEOUT_SECONDS', '300'))
+PUBLIC_FEED_CACHE_TIMEOUT_SECONDS = int(os.getenv('PUBLIC_FEED_CACHE_TIMEOUT_SECONDS', '300'))
+LESSON_DETAIL_CACHE_TIMEOUT_SECONDS = int(os.getenv('LESSON_DETAIL_CACHE_TIMEOUT_SECONDS', '600'))
+
+if CACHE_URL.startswith(('redis://', 'rediss://')):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': CACHE_URL,
+            'TIMEOUT': CACHE_DEFAULT_TIMEOUT_SECONDS,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'vibe-studying-cache',
+            'TIMEOUT': CACHE_DEFAULT_TIMEOUT_SECONDS,
+        }
+    }
+
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL or 'memory://')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL or 'cache+memory://')
+CELERY_TASK_DEFAULT_QUEUE = os.getenv('CELERY_TASK_DEFAULT_QUEUE', 'default')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = env_bool('CELERY_TASK_ALWAYS_EAGER', default=False)
+CELERY_TASK_EAGER_PROPAGATES = env_bool('CELERY_TASK_EAGER_PROPAGATES', default=False)
+CELERY_BEAT_SCHEDULE = {
+    'dispatch-due-email-deliveries-every-minute': {
+        'task': 'operations.tasks.dispatch_due_email_deliveries_task',
+        'schedule': crontab(),
+    },
+    'schedule-inactivity-reminders-hourly': {
+        'task': 'operations.tasks.schedule_inactivity_reminders_task',
+        'schedule': crontab(minute=0),
+    },
+    'run-operational-checks-every-15-minutes': {
+        'task': 'operations.tasks.run_operational_checks_task',
+        'schedule': crontab(minute='*/15'),
+    },
+}
+
+REMINDER_INACTIVITY_HOURS = int(os.getenv('REMINDER_INACTIVITY_HOURS', '24'))
+ALERT_EMAIL_RECIPIENTS = env_list('ALERT_EMAIL_RECIPIENTS', '')
+OPERATIONS_ALERTS_ENABLED = env_bool('OPERATIONS_ALERTS_ENABLED', default=True)
+OPERATIONS_PENDING_EMAIL_MINUTES = int(os.getenv('OPERATIONS_PENDING_EMAIL_MINUTES', '15'))
+OPERATIONS_PENDING_EMAIL_THRESHOLD = int(os.getenv('OPERATIONS_PENDING_EMAIL_THRESHOLD', '10'))
+OPERATIONS_FAILED_EMAIL_THRESHOLD = int(os.getenv('OPERATIONS_FAILED_EMAIL_THRESHOLD', '3'))
+OPERATIONS_PENDING_SUBMISSION_HOURS = int(os.getenv('OPERATIONS_PENDING_SUBMISSION_HOURS', '6'))
+OPERATIONS_PENDING_SUBMISSION_THRESHOLD = int(os.getenv('OPERATIONS_PENDING_SUBMISSION_THRESHOLD', '10'))
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s',
+            'format': '%(asctime)s %(levelname)s [%(name)s] [request_id=%(request_id)s] %(message)s',
+        },
+    },
+    'filters': {
+        'request_id': {
+            '()': 'config.middleware.RequestIdLogFilter',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'standard',
+            'filters': ['request_id'],
         },
     },
     'root': {
@@ -211,6 +284,11 @@ LOGGING = {
             'propagate': False,
         },
         'learning': {
+            'handlers': ['console'],
+            'level': os.getenv('APP_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'operations': {
             'handlers': ['console'],
             'level': os.getenv('APP_LOG_LEVEL', 'INFO'),
             'propagate': False,

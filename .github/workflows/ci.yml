@@ -42,6 +42,10 @@ jobs:
       DATABASE_PORT: '5432'
       JWT_SECRET_KEY: test-jwt-secret
       ENABLE_PUBLIC_TEACHER_SIGNUP: 'True'
+      CELERY_BROKER_URL: memory://
+      CELERY_RESULT_BACKEND: cache+memory://
+      RUNTIME_ENVIRONMENT: ci
+      PUBLIC_WEB_URL: https://vibestudying.app
 
     steps:
       - uses: actions/checkout@v4

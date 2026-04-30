@@ -16,6 +16,7 @@ from ninja.errors import HttpError
 from accounts.jwt import JWTError, create_token_pair, decode_jwt, jwt_auth
 from accounts.models import StudentProfile, WaitlistSignup
 from accounts.permissions import require_role
+from operations.emailing import queue_student_welcome_email, queue_waitlist_welcome_email
 
 
 router = Router()
@@ -225,6 +226,7 @@ def register_student(request, payload: RegisterInput):
         raise HttpError(409, "An account with this e-mail already exists.")
 
     user = create_account(payload, User.Role.STUDENT)
+    queue_student_welcome_email(user)
 
     return 201, build_auth_response(user)
 
@@ -311,6 +313,8 @@ def join_waitlist(request, payload: WaitlistInput):
     if not created and signup.source != source:
         signup.source = source
         signup.save(update_fields=["source"])
+    elif created:
+        queue_waitlist_welcome_email(signup)
 
     response = WaitlistResponseSchema(
         email=signup.email,

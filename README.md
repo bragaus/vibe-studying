@@ -32,6 +32,9 @@ O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entre
 - app mobile Flutter versionado no monorepo com login, onboarding, feed personalizado e prática inicial
 - cache local inicial e fila offline de tentativas no mobile
 - base de Docker e CI para backend/frontend
+- e-mails assíncronos, scheduler inicial de lembretes e checagens operacionais
+- health check com componentes de banco, cache e broker
+- cache no backend para feed público e detalhe de lesson
 - testes básicos no backend e no frontend
 
 ## Status Atual
@@ -157,7 +160,7 @@ Aplicação web disponível em `http://localhost:8080` ou na porta informada pel
 
 ### Docker Compose
 
-Para subir a stack local com Postgres, Redis, backend e frontend:
+Para subir a stack local com Postgres, Redis, backend, worker, beat e frontend:
 
 ```bash
 docker compose up --build
@@ -169,6 +172,8 @@ Serviços esperados:
 - backend em `https://backendvibestudying.planoartistico.com/api`
 - PostgreSQL em `localhost:5432`
 - Redis em `localhost:6379`
+- worker Celery para e-mails e jobs assíncronos
+- beat Celery para lembretes e checagens agendadas
 
 ## Variáveis de Ambiente
 
@@ -192,6 +197,12 @@ Serviços esperados:
 | `ENABLE_PUBLIC_TEACHER_SIGNUP` | Habilita ou bloqueia cadastro público de professor |
 | `EMAIL_BACKEND` | Backend de e-mail do Django |
 | `DEFAULT_FROM_EMAIL` | Remetente padrão |
+| `REDIS_URL` | URL base do Redis |
+| `CACHE_URL` | URL do cache |
+| `CELERY_BROKER_URL` | Broker das tasks assíncronas |
+| `CELERY_RESULT_BACKEND` | Backend de resultado do Celery |
+| `REMINDER_INACTIVITY_HOURS` | Janela para disparo de lembrete |
+| `ALERT_EMAIL_RECIPIENTS` | Destinatários dos alertas operacionais |
 | `LOG_LEVEL` | Nível de log raiz |
 
 ### Frontend
@@ -229,6 +240,22 @@ Serviços esperados:
 cd backend
 source .venv/bin/activate
 python manage.py test
+```
+
+Para rodar worker localmente fora do Docker:
+
+```bash
+cd backend
+source .venv/bin/activate
+celery -A config worker -l info
+```
+
+Para rodar o scheduler localmente:
+
+```bash
+cd backend
+source .venv/bin/activate
+celery -A config beat -l info
 ```
 
 ### Frontend

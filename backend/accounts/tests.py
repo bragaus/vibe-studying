@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 
 from accounts.models import StudentProfile, User, WaitlistSignup
+from operations.models import EmailDelivery
 
 
 class AuthApiTests(TestCase):
@@ -19,6 +20,7 @@ class AuthApiTests(TestCase):
         self.assertEqual(register_response.status_code, 201)
         register_data = register_response.json()
         self.assertEqual(register_data["user"]["role"], User.Role.STUDENT)
+        self.assertEqual(EmailDelivery.objects.filter(template_key=EmailDelivery.TemplateKey.STUDENT_WELCOME).count(), 1)
 
         me_response = self.client.get(
             "/api/auth/me",
@@ -138,6 +140,7 @@ class AuthApiTests(TestCase):
         self.assertTrue(second_response.json()["already_registered"])
         self.assertEqual(WaitlistSignup.objects.count(), 1)
         self.assertEqual(WaitlistSignup.objects.get().source, "hero_cta")
+        self.assertEqual(EmailDelivery.objects.filter(template_key=EmailDelivery.TemplateKey.WAITLIST_WELCOME).count(), 1)
 
     def test_waitlist_rejects_invalid_email(self):
         response = self.client.post(

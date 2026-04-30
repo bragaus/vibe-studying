@@ -6,6 +6,8 @@ Cada router concentra um contexto do sistema para manter o codigo modular.
 
 from ninja import NinjaAPI
 
+from config.health import build_health_report
+
 from accounts.api import marketing_router, profile_router, router as auth_router
 from learning.api import public_router, submission_router, teacher_router
 
@@ -25,7 +27,6 @@ api.add_router("/teacher", teacher_router)
 api.add_router("", submission_router)
 
 
-@api.get("/health", tags=["Health"])
+@api.get("/health", tags=["Health"], response={200: dict, 503: dict})
 def health_check(request):
-    # Endpoint simples para testar se a API subiu corretamente.
-    return {"status": "ok", "service": "vibe-studying-backend"}
+    return build_health_report()
