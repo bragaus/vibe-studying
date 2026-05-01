@@ -64,6 +64,7 @@ print_success "DIRECTORY MOUNTED COMPLETED."
 # 3. Criação do VENV
 print_step "GENERATING KERNEL (.VENV)..."
 echo -e "          ${NEON_CYAN}[${NEON_MAGENTA}██████████░░░░░░░░${NEON_CYAN}]${RESET} PROCESSING..."
+rm -rf .venv
 python3 -m venv .venv
 print_success "VENV KERNEL ESTABLISHED."
 
@@ -79,13 +80,13 @@ pip install -r requirements.txt > /dev/null 2>&1
 print_success "DEPENDENCIES INSTALLED SUCCESSFULLY."
 
 # 6. Configuração de Variáveis de Ambiente
-print_step "CLONING ENVIRONMENT PROTOCOLS..."
-if [ ! -f .env ]; then
-    cp .env.example .env
-    print_success ".ENV FILE CLONED FROM .ENV.EXAMPLE."
-else
-    print_success ".ENV FILE ALREADY EXISTS. OVERRIDE BYPASSED."
-fi
+#print_step "CLONING ENVIRONMENT PROTOCOLS..."
+#if [ ! -f .env ]; then
+#    cp .env.example .env
+#    print_success ".ENV FILE CLONED FROM .ENV.EXAMPLE."
+#else
+#    print_success ".ENV FILE ALREADY EXISTS. OVERRIDE BYPASSED."
+#fi
 
 # 7. Migrações de Banco de Dados
 print_step "EXECUTING DATABASE MIGRATION PROTOCOL..."
