@@ -72,13 +72,10 @@ const Hero = () => {
               LOGIN
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </motion.div>
-
-          <div className="mt-12 max-w-2xl mx-auto text-center">
-            <p className="font-display text-xl text-gradient-vibe sm:text-2xl">
+            <p className="font-display text-center text-xl text-gradient-vibe sm:text-left sm:text-2xl">
               Aprenda qualquer idioma na vibe.
             </p>
-          </div>
+          </motion.div>
         </div>
 
         {/* Phone mock */}

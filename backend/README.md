@@ -1,185 +1,192 @@
-# 🧪 Desafio Técnico — Software Engineer Web
-
-## 📌 Contexto
-
-O objetivo deste desafio é avaliar sua capacidade de:
-
-- Estruturar um projeto end-to-end
-- Utilizar LLMs (ex: Claude, GPT, etc.) como copiloto de desenvolvimento
-- Tomar decisões de produto e engenharia
-- Entregar algo funcional, bem apresentado e coerente
-
----
-
-## 🎯 Proposta
-
-Você deverá desenvolver **um mini ecossistema educacional**, contendo:
-
-### 1) 🌐 Landing Page
-
-- Página pública apresentando o produto
-- Deve ter:
-  - Proposta de valor clara
-  - Call-to-action (CTA)
-  - Estrutura básica de SEO
-
----
-
-### 2) 🧩 Plataforma SaaS
-
-- Sistema web completo com:
-  - 🔐 Autenticação (login/cadastro)
-  - 🖥️ Frontend em React com Next.js
-  - ⚙️ Backend em Django + Django Ninja
-  - 🗄️ Banco de dados PostgreSQL
-- Deve conter pelo menos **uma funcionalidade principal relevante**
-
----
-
-### 3) 📱 App Mobile (Flutter)
-
-- Aplicativo com:
-  - Funcionalidade offline-first
-  - Sincronização com backend
-- Pode ser uma versão simplificada do SaaS
-
----
-
-## 🧠 Tema do Projeto
-
-Você é livre para escolher o tema, **desde que esteja relacionado à educação**.
-
-### 💡 Sugestões de temas (opcional)
-
-- Plataforma de resolução de exercícios com correção automática  
-- App de flashcards com repetição espaçada  
-- Sistema de acompanhamento de estudos  
-- Plataforma de simulados  
-- App de leitura com anotações e resumos  
-- Sistema para professores gerenciarem turmas  
-- Plataforma de microlearning  
-- App de ensino de programação  
-- Sistema de organização de estudos com IA  
-
----
-
-## 🪜 Etapas do Desafio
-
-### 0) ⏱️ Planejamento inicial
-
-- 1 hora para leitura e definição de prazo
-
-### 1) ❓ Levantamento de dúvidas
-
-- Enviar perguntas antes de iniciar
-
-### 2) 🎨 Prototipação
-
-- Wireframes e protótipos visuais
-
-### 3) ⚙️ Setup inicial
-
-- Inicialização do projeto e ferramentas
-
-### 4) 📝 PRD
-
-- Criar PRD.md com apoio de LLMs
-
-### 5) 🏗️ Tech Specs
-
-- Criar TechSpecs.md com decisões técnicas
-
-### 6) 🚀 Implementação
-
-- Desenvolvimento completo
-
-### 7) 🎤 Apresentação
-
-- Demonstração e explicação
-
----
-
-## ⭐ Bônus (Avançado)
-
-> Bônus não são obrigatórios, mas serão considerados como diferencial forte — especialmente quando bem justificados.
-
-### 🧵 Uso de Temporal (filas e workflows)
-
-- Implementar ao menos um fluxo assíncrono relevante
-
-Sugestões:
-
-- Envio de e-mails assíncronos  
-- Processamento de exercícios em background  
-- Sincronização offline → online  
-- Geração de conteúdo com IA  
-- Agendamentos (lembretes, drip content)  
-
----
-
-### ☁️ Deploy & Infra
-
-- Deploy completo
-- Docker / CI-CD
-
----
-
-### 📊 Observabilidade
-
-- Logs e monitoramento
-
----
-
-### 🔐 Segurança
-
-- Autenticação e boas práticas
-
----
-
-### ⚡ Performance
-
-- Cache e otimizações
-
----
-
-### 🧪 Testes
-
-- Testes básicos
-
----
-
-### 🧱 Arquitetura
-
-- Código modular e bem estruturado
-
----
-
-## 📊 Critérios de Avaliação
-
-### 🧠 Uso de LLMs
-
-- Clareza e eficiência
-
-### 🏗️ Estrutura
-
-- Organização e arquitetura
-
-### 🎨 Produto
-
-- UX/UI e detalhes
-
-### ⚙️ Técnica
-
-- Código e funcionamento
-
-### 🗣️ Comunicação
-
-- Clareza e alinhamento
-
-### 🎤 Apresentação
-
-- Demonstração e explicação
-
-### ⏱️ Prazo
-
-- Cumprimento do prazo
+# Backend - Vibe Studying
+
+Backend em Django 6 + Django Ninja responsavel por auth, profile, onboarding, feed, lessons, submissions e operacao inicial do produto.
+
+## Stack
+
+- Python 3.12+
+- Django 6
+- Django Ninja
+- PostgreSQL
+- Redis opcional para cache e Celery completos
+
+## Dependencias Do Sistema
+
+Exemplo para Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip libpq-dev postgresql postgresql-contrib redis-server
+```
+
+Observacao:
+
+- `redis-server` e opcional se voce quiser apenas subir a API com cache local e Celery em memoria
+- para fila, cache Redis e scheduler completos, mantenha o Redis instalado e ativo
+
+## Preparando O PostgreSQL
+
+Uma configuracao simples local usando o usuario `postgres`:
+
+```bash
+sudo systemctl enable --now postgresql
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+sudo -u postgres createdb vibe_studying
+```
+
+Se o banco ja existir, o `createdb` pode falhar sem problema.
+
+## Instalacao Do Projeto
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+## Variaveis De Ambiente
+
+Arquivo usado pelo projeto: `backend/.env`
+
+Exemplo minimo para desenvolvimento local:
+
+```env
+DEBUG=True
+SECRET_KEY=change-me
+PUBLIC_API_HOST=127.0.0.1
+PUBLIC_API_ORIGIN=http://127.0.0.1:8000
+ALLOWED_HOSTS=127.0.0.1,localhost,testserver
+CORS_ALLOW_ALL_ORIGINS=True
+CORS_ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+DATABASE_NAME=vibe_studying
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+JWT_SECRET_KEY=change-me-too
+ENABLE_PUBLIC_TEACHER_SIGNUP=True
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+DEFAULT_FROM_EMAIL=noreply@vibestudying.local
+SERVER_EMAIL=noreply@vibestudying.local
+PUBLIC_WEB_URL=http://localhost:8080
+RUNTIME_ENVIRONMENT=development
+REDIS_URL=
+CACHE_URL=
+CELERY_BROKER_URL=memory://
+CELERY_RESULT_BACKEND=cache+memory://
+```
+
+### Variaveis Mais Importantes
+
+| Variavel | Obrigatoria | Uso |
+| --- | --- | --- |
+| `DEBUG` | sim | ativa modo de desenvolvimento |
+| `SECRET_KEY` | sim | chave principal do Django |
+| `DATABASE_NAME` | sim | nome do banco PostgreSQL |
+| `DATABASE_USER` | sim | usuario do banco |
+| `DATABASE_PASSWORD` | depende | senha do usuario do banco |
+| `DATABASE_HOST` | sim | host do banco |
+| `DATABASE_PORT` | sim | porta do banco |
+| `JWT_SECRET_KEY` | sim | assinatura dos tokens JWT |
+| `CORS_ALLOWED_ORIGINS` | recomendado | origens permitidas do frontend |
+| `CSRF_TRUSTED_ORIGINS` | recomendado | origens confiaveis para CSRF |
+| `ENABLE_PUBLIC_TEACHER_SIGNUP` | recomendado | libera ou fecha signup publico de professor |
+| `EMAIL_BACKEND` | recomendado | console local ou SMTP real |
+| `REDIS_URL` | opcional | broker/cache Redis |
+| `CACHE_URL` | opcional | cache Redis |
+| `CELERY_BROKER_URL` | opcional | broker do Celery |
+| `CELERY_RESULT_BACKEND` | opcional | backend de resultados do Celery |
+
+### Modo Minimo Vs Modo Completo
+
+Modo minimo local:
+
+- deixe `REDIS_URL` vazio
+- use `CELERY_BROKER_URL=memory://`
+- use `CELERY_RESULT_BACKEND=cache+memory://`
+- `EMAIL_BACKEND` pode ficar no console
+
+Modo completo local:
+
+```env
+REDIS_URL=redis://127.0.0.1:6379/0
+CACHE_URL=redis://127.0.0.1:6379/1
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/2
+```
+
+## Rodando A API
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py migrate
+python manage.py runserver
+```
+
+API local esperada em `http://127.0.0.1:8000/api`.
+
+Health check:
+
+```text
+GET /api/health
+```
+
+## Rodando Worker E Scheduler
+
+Somente faz sentido rodar estes processos se voce configurou Redis ou quiser validar Celery localmente.
+
+Worker:
+
+```bash
+cd backend
+source .venv/bin/activate
+celery -A config worker -l info
+```
+
+Beat:
+
+```bash
+cd backend
+source .venv/bin/activate
+celery -A config beat -l info
+```
+
+## Testes E Checks
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py check
+python manage.py test
+```
+
+## Endpoints Principais
+
+- `POST /api/auth/register`
+- `POST /api/auth/register/teacher`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `GET /api/auth/me`
+- `GET /api/profile/me`
+- `POST /api/profile/onboarding`
+- `POST /api/waitlist`
+- `GET /api/feed`
+- `GET /api/feed/personalized`
+- `GET /api/lessons/{slug}`
+- `GET /api/teacher/lessons`
+- `POST /api/teacher/lessons`
+- `PUT /api/teacher/lessons/{lesson_id}`
+- `POST /api/submissions`
+- `GET /api/submissions/me`
+- `GET /api/health`
+
+## Observacoes
+
+- o banco padrao do projeto e PostgreSQL; nao ha suporte real a SQLite no estado atual
+- o backend ja suporta e-mails, reminders e checks operacionais
+- o processamento confiavel de score das submissions ainda nao esta implementado

@@ -89,7 +89,7 @@ fi
 
 # 7. Migrações de Banco de Dados
 print_step "EXECUTING DATABASE MIGRATION PROTOCOL..."
-python manage.py migrate > /dev/null 2>&1
+python3 manage.py migrate > /dev/null 2>&1
 print_success "TABLES PROCESSED AND SYNCED."
 
 # 8. Inicialização do Servidor
@@ -102,4 +102,4 @@ echo -e "${NEON_YELLOW}PRESS CTRL+C TO TERMINATE NEURAL LINK...${RESET}"
 echo ""
 
 # Roda o servidor
-python manage.py runserver
+python3 manage.py runserver

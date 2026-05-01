@@ -190,7 +190,12 @@ JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_DAYS
 # mas deve ser fechado explicitamente fora dele.
 ENABLE_PUBLIC_TEACHER_SIGNUP = env_bool('ENABLE_PUBLIC_TEACHER_SIGNUP', default=DEBUG)
 
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend'
+    if os.getenv('EMAIL_HOST_USER') and os.getenv('EMAIL_HOST_PASSWORD')
+    else 'django.core.mail.backends.console.EmailBackend',
+)
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vibestudying.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))

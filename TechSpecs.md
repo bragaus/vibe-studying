@@ -1,651 +1,442 @@
-# Tech Specs
+# Tech Specs - Vibe Studying
+
+Doc status: especificacao tecnica alinhada ao codigo real do monorepo em 2026-04-30.
 
 ## Objetivo
 
-Construir um app Flutter focado no aluno, com o seguinte fluxo principal:
+Documentar a arquitetura atual do Vibe Studying com foco em tres pontos:
 
-1. login
-2. cadastro
-3. onboarding de gostos
-4. feed personalizado
-5. prática de pronúncia estilo Guitar Hero/Karaoke
-6. pausa guiada por IA quando houver erro de palavra ou pronúncia
+- como o sistema funciona hoje
+- quais contratos ja estao estaveis
+- quais gaps tecnicos precisam ser tratados antes de evoluir o produto
 
-O objetivo do build inicial nao e resolver tudo em tempo real no primeiro commit. A estrategia correta e entregar em camadas, reaproveitando o backend Django Ninja que ja existe.
+## Resumo Executivo
 
-## Estado Atual Do Repositorio
+O sistema e um monorepo com tres superficies:
 
-- O backend ja expoe autenticacao JWT em `/api/auth/*`.
-- O backend ja tem `Lesson`, `Exercise` e `Submission`.
-- O feed atual (`GET /api/feed`) e publico e nao personalizado.
-- Cada `Lesson` tem exatamente um `Exercise`.
-- O `Exercise` atual suporta apenas uma frase principal (`expected_phrase_en` / `expected_phrase_pt`).
+- `backend/`: Django + Django Ninja, source of truth para auth, profile, learning e operations
+- `frontend/`: React + Vite, usado hoje para landing, auth simples e portal de downloads
+- `mobile/`: Flutter, principal experiencia de estudo para o aluno
 
-Esse ultimo ponto e o principal gap tecnico para a experiencia tipo Guitar Hero: a pratica desejada precisa de varias linhas por exercicio, em ordem, com velocidade progressiva e feedback por linha.
+Arquitetura recomendada para continuidade: manter o backend monolitico como nucleo do dominio e evoluir web/mobile consumindo os mesmos contratos HTTP.
 
-## Decisoes De Produto Para O MVP Mobile
-
-- O app Flutter sera student-only no primeiro ciclo.
-- O cadastro do mobile usa apenas `POST /api/auth/register`.
-- Professor continua gerindo conteudo pela web/admin/backend; o app mobile nao tera CRUD de lessons.
-- O onboarding sera obrigatorio antes do feed personalizado.
-- O primeiro slice de pratica sera online-first.
-- Offline-first entra como segunda fase: cache local de feed + fila de tentativas pendentes.
-
-## Arquitetura Do Mobile
-
-### Stack
-
-- Flutter 3.x
-- `flutter_riverpod` para estado
-- `go_router` para navegacao
-- `dio` para HTTP
-- `flutter_secure_storage` para tokens
-- `record` para captura de audio
-- `permission_handler` para permissoes
-- `just_audio` para audio de referencia
-- `web_socket_channel` para streaming em tempo real na fase 2
-- `freezed` + `json_serializable` para modelos tipados
-
-### Estrutura De Pastas Recomendada
+## Estrutura Do Repositorio
 
 ```text
-mobile/
-  lib/
-    app/
-      router/
-      theme/
-      bootstrap/
-    core/
-      api/
-      auth/
-      config/
-      errors/
-      storage/
-      utils/
-    features/
-      auth/
-        data/
-        domain/
-        presentation/
-      onboarding/
-        data/
-        domain/
-        presentation/
-      feed/
-        data/
-        domain/
-        presentation/
-      practice/
-        data/
-        domain/
-        presentation/
-      profile/
-        data/
-        domain/
-        presentation/
-    shared/
-      widgets/
-      models/
+.
+|- backend/
+|  |- accounts/
+|  |- learning/
+|  |- operations/
+|  |- config/
+|  `- scripts/
+|- frontend/
+|  |- src/
+|  |  |- components/
+|  |  |- pages/
+|  |  |- lib/
+|  |  `- test/
+|  `- package.json
+|- mobile/
+|  |- lib/
+|  |  |- app/
+|  |  |- core/
+|  |  |- features/
+|  |  `- shared/
+|  `- pubspec.yaml
+|- docker-compose.yml
+|- .github/workflows/ci.yml
+|- codemagic.yaml
+|- PRD.md
+|- TechSpecs.md
+`- DESIGN.md
 ```
 
-### Configuracao De Ambiente
+## Stack Por Camada
 
-Para o app Flutter, preferir `--dart-define` em vez de `flutter_dotenv` no primeiro ciclo.
+| Camada | Stack real |
+| --- | --- |
+| Backend | Python 3.12, Django 6, Django Ninja, PostgreSQL, Celery, Redis |
+| Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion |
+| Mobile | Flutter, Riverpod, GoRouter, Dio, Flutter Secure Storage, SharedPreferences, speech_to_text |
+| Infra | Docker Compose, GitHub Actions, Codemagic |
 
-Valores previstos:
+## Arquitetura De Sistema
 
-- `API_BASE_URL`
-- `WS_BASE_URL`
-
-Exemplo local:
-
-```bash
-flutter run \
-  --dart-define=API_BASE_URL=http://10.0.2.2:8000/api \
-  --dart-define=WS_BASE_URL=ws://10.0.2.2:8000/ws
+```mermaid
+flowchart LR
+    A[Landing/Auth Web] --> D[API Django Ninja]
+    B[Portal Web Download] --> D
+    C[Mobile Student App] --> D
+    D --> E[(PostgreSQL)]
+    D --> F[(Redis cache/broker)]
+    D --> G[Celery Worker]
+    D --> H[Celery Beat]
 ```
 
-Observacao: no emulador Android, `10.0.2.2` aponta para o host local. Nao usar `localhost` no app Android.
-
-## Design System Mobile
+### Papel De Cada Superficie
 
-O app Flutter deve herdar a linguagem da landing web ja existente.
-
-### Tokens Visuais
-
-Baseados no `frontend/src/index.css`:
-
-- background profundo roxo escuro
-- neon pink como cor primaria
-- neon cyan como cor secundaria
-- accent amarelo eletrico
-- tipografia display agressiva para titulos
-- HUD panels com blur, bordas semi-transparentes e glow
-
-### Implementacao No Flutter
-
-- Criar `AppPalette` com cores equivalentes ao CSS.
-- Criar `AppTheme` com:
-  - `ColorScheme.dark`
-  - componentes com borda fina e glow
-  - `TextTheme` com uma fonte display e uma mono
-- Criar widgets reutilizaveis:
-  - `HudScaffold`
-  - `HudPanel`
-  - `NeonButton`
-  - `HudBadge`
-  - `GlowProgressBar`
-
-## Fluxo De Navegacao
-
-### Rotas
-
-- `/splash`
-- `/login`
-- `/register`
-- `/onboarding`
-- `/feed`
-- `/practice/:lessonSlug`
-- `/profile`
-
-### Regras De Redirect
-
-- sem token: `/login`
-- com token e sem onboarding completo: `/onboarding`
-- com token e onboarding completo: `/feed`
-
-O `go_router` deve consultar um `sessionProvider` e um `profileProvider` para decidir os redirects.
-
-## Estado Global
-
-### Providers Principais
-
-- `dioProvider`
-- `authRepositoryProvider`
-- `sessionControllerProvider`
-- `profileRepositoryProvider`
-- `profileControllerProvider`
-- `feedRepositoryProvider`
-- `personalizedFeedProvider`
-- `practiceSessionControllerProvider`
-
-### Sessao
-
-Persistir em `flutter_secure_storage`:
-
-- access token
-- refresh token
-- user id
-- user role
-
-O `dio` precisa de interceptor para:
-
-1. anexar `Authorization: Bearer <token>`
-2. tentar `POST /api/auth/refresh` uma unica vez em resposta `401`
-3. deslogar se refresh falhar
-
-## Modelagem Mobile
+- Backend: contratos, autorizacao, modelos, operacao e cache
+- Web: aquisicao, autenticacao basica, distribuicao de artefatos Android
+- Mobile: onboarding, feed personalizado, pratica e resiliencia offline
 
-### Modelos Basicos
-
-```text
-AppUser
-- id
-- email
-- firstName
-- lastName
-- role
-
-StudentProfile
-- userId
-- onboardingCompleted
-- englishLevel
-- favoriteSongs[]
-- favoriteMovies[]
-- favoriteSeries[]
-- favoriteAnime[]
-- favoriteArtists[]
-- favoriteGenres[]
-
-FeedItem
-- id
-- slug
-- title
-- description
-- contentType
-- mediaUrl
-- teacherName
-- difficulty
-- matchReason
-- tags[]
-
-ExerciseLine
-- id
-- order
-- textEn
-- textPt
-- phoneticHint
-- referenceStartMs
-- referenceEndMs
-
-PracticeResult
-- lessonSlug
-- accuracy
-- pronunciationScore
-- wrongWords[]
-- coachMessage
-```
+## Backend
 
-## Mudancas Necessarias No Backend
+### Modulos
+
+#### `accounts`
+
+Responsabilidades:
+
+- user customizado por e-mail
+- JWT custom
+- cadastro, login, refresh, `me`
+- profile do aluno
+- onboarding
+- waitlist publica
+
+Arquivos-chave:
+
+- `backend/accounts/models.py`
+- `backend/accounts/api.py`
+- `backend/accounts/jwt.py`
 
-### 1. Perfil Do Aluno
+#### `learning`
 
-Adicionar um novo app ou modulo de perfil com um model `StudentProfile`.
+Responsabilidades:
 
-Para o MVP, usar `JSONField` para listas de gosto. E a solucao mais rapida e boa o suficiente nesta fase.
+- feed publico
+- feed personalizado
+- detalhe de lesson
+- CRUD de lesson para professor
+- submissions do aluno
+
+Arquivos-chave:
+
+- `backend/learning/models.py`
+- `backend/learning/api.py`
+
+#### `operations`
 
-```text
-StudentProfile
-- user (OneToOne com accounts.User)
-- onboarding_completed (bool)
-- english_level (char)
-- favorite_songs (JSONField)
-- favorite_movies (JSONField)
-- favorite_series (JSONField)
-- favorite_anime (JSONField)
-- favorite_artists (JSONField)
-- favorite_genres (JSONField)
-```
-
-Motivo: o usuario quer descrever gostos livres como musicas, filmes, series e animes favoritos. Normalizar tudo agora atrasaria o build. Se a curadoria crescer, podemos migrar depois para tags normalizadas.
-
-### 2. Feed Personalizado
-
-O `GET /api/feed` atual nao basta para o app.
-
-Adicionar:
-
-- `GET /api/profile/me`
-- `PUT /api/profile/me`
-- `POST /api/profile/onboarding`
-- `GET /api/feed/personalized`
-
-### 3. Conteudo De Series
-
-`Lesson.ContentType` hoje tem:
-
-- `charge`
-- `music`
-- `movie_clip`
-- `anime_clip`
-
-Adicionar `series_clip`, porque o onboarding e o feed precisam representar series favoritas explicitamente.
-
-### 4. Exercicio Com Varias Linhas
-
-O `Exercise` atual tem apenas uma frase esperada. Para a experiencia tipo Guitar Hero, adicionar uma tabela filha ordenada.
-
-```text
-ExerciseLine
-- exercise (FK)
-- order (int)
-- text_en
-- text_pt
-- phonetic_hint
-- reference_start_ms
-- reference_end_ms
-```
-
-Regras:
-
-- um `Exercise` continua pertencendo a uma unica `Lesson`
-- um `Exercise` passa a ter varias `ExerciseLine`
-- o app toca/mostra essas linhas na ordem crescente de `order`
-
-### 5. Persistencia Das Tentativas
-
-Nao vale persistir cada parcial de transcript no banco desde o inicio.
-
-Manter `Submission` como resumo da tentativa completa e adicionar feedback por linha.
-
-```text
-SubmissionLine
-- submission (FK)
-- exercise_line (FK)
-- transcript_en
-- accuracy_score
-- pronunciation_score
-- wrong_words (JSONField)
-- feedback (JSONField)
-- status
-```
-
-Beneficio: reaproveita o dominio atual de `Submission` sem inventar um segundo conceito concorrente para tentativa.
-
-## Contrato De API Proposto
-
-### Auth
-
-Ja existentes e reaproveitados sem mudanca:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `GET /api/auth/me`
-
-### Profile
-
-#### `GET /api/profile/me`
-
-Resposta:
-
-```json
-{
-  "user": {
-    "id": 1,
-    "email": "student@example.com",
-    "first_name": "Ana",
-    "last_name": "Silva",
-    "role": "student"
-  },
-  "profile": {
-    "onboarding_completed": false,
-    "english_level": "beginner",
-    "favorite_songs": [],
-    "favorite_movies": [],
-    "favorite_series": [],
-    "favorite_anime": [],
-    "favorite_artists": [],
-    "favorite_genres": []
-  }
-}
-```
-
-#### `PUT /api/profile/me`
-
-Payload:
-
-```json
-{
-  "english_level": "beginner",
-  "favorite_songs": ["Numb", "Yellow"],
-  "favorite_movies": ["Interstellar"],
-  "favorite_series": ["Breaking Bad"],
-  "favorite_anime": ["Naruto"],
-  "favorite_artists": ["Linkin Park"],
-  "favorite_genres": ["rock", "sci-fi"]
-}
-```
-
-#### `POST /api/profile/onboarding`
-
-Mesmo payload do update, mas finaliza com `onboarding_completed=true`.
-
-### Feed
-
-#### `GET /api/feed/personalized?cursor=123&limit=10`
-
-Resposta:
-
-```json
-{
-  "items": [
-    {
-      "id": 10,
-      "slug": "numb-linkin-park-intro",
-      "title": "Numb - chorus practice",
-      "description": "Treine a frase principal do refrão.",
-      "content_type": "music",
-      "media_url": "https://...",
-      "teacher_name": "Coach AI",
-      "difficulty": "easy",
-      "match_reason": "matches favorite artist",
-      "tags": ["linkin park", "rock", "music"]
-    }
-  ],
-  "next_cursor": 9
-}
-```
-
-### Practice MVP
-
-#### `GET /api/lessons/{slug}`
-
-Ampliar a resposta para incluir `exercise.lines`.
+Responsabilidades:
 
-#### `POST /api/submissions`
+- fila de e-mails
+- templates transacionais simples
+- reminders de inatividade
+- checks operacionais por threshold
 
-Continuar criando a tentativa principal, mas aceitar dados agregados da sessao.
+Arquivos-chave:
 
-Payload esperado na fase 1:
+- `backend/operations/models.py`
+- `backend/operations/emailing.py`
+- `backend/operations/tasks.py`
 
-```json
-{
-  "exercise_id": 42,
-  "transcript_en": "I tried all lines in sequence",
-  "transcript_pt": "",
-  "line_results": [
-    {
-      "exercise_line_id": 100,
-      "transcript_en": "Hello from the other side",
-      "accuracy_score": 84,
-      "pronunciation_score": 79,
-      "wrong_words": ["other"],
-      "feedback": {
-        "coach_message": "Encoste a lingua para o som th em other"
-      }
-    }
-  ]
-}
-```
-
-### Practice Realtime - Fase 2
+### Roteamento Da API
 
-Adicionar websocket apenas depois do MVP de frase-a-frase funcionar.
+Entrada principal: `backend/config/api.py`
 
-- `WS /api/practice/stream/{submission_id}`
+Rotas montadas:
 
-Eventos previstos:
+- `/api/auth/*`
+- `/api/profile/*`
+- `/api/waitlist`
+- `/api/feed`
+- `/api/feed/personalized`
+- `/api/lessons/{slug}`
+- `/api/teacher/lessons`
+- `/api/submissions`
+- `/api/submissions/me`
+- `/api/health`
 
-- `session.started`
-- `transcript.partial`
-- `line.match_progress`
-- `line.failed`
-- `coach.feedback`
-- `session.completed`
+### Endpoints Principais
 
-## Algoritmo Inicial De Personalizacao
+| Metodo | Rota | Uso |
+| --- | --- | --- |
+| `POST` | `/api/waitlist` | captura de lead |
+| `POST` | `/api/auth/register` | cadastro de aluno |
+| `POST` | `/api/auth/register/teacher` | cadastro de professor |
+| `POST` | `/api/auth/login` | login |
+| `POST` | `/api/auth/refresh` | renovacao de sessao |
+| `GET` | `/api/auth/me` | identidade autenticada |
+| `GET` | `/api/profile/me` | profile do aluno |
+| `PUT` | `/api/profile/me` | atualizacao de profile |
+| `POST` | `/api/profile/onboarding` | conclusao de onboarding |
+| `GET` | `/api/feed` | feed publico |
+| `GET` | `/api/feed/personalized` | feed ranqueado por preferencias |
+| `GET` | `/api/lessons/{slug}` | detalhe de lesson |
+| `GET` | `/api/teacher/lessons` | lista lessons do professor |
+| `POST` | `/api/teacher/lessons` | cria lesson |
+| `PUT` | `/api/teacher/lessons/{lesson_id}` | edita lesson |
+| `POST` | `/api/submissions` | cria submission |
+| `GET` | `/api/submissions/me` | historico do aluno |
+| `GET` | `/api/health` | health check operacional |
 
-O feed inicial pode ser simples e deterministico. Nao precisa de ML no primeiro ciclo.
+## Modelo De Dominio
 
-Score sugerido por lesson:
+### Entidades Principais
 
-- `+5` se a franquia/titulo bater exatamente com gosto do aluno
-- `+4` se artista bater exatamente
-- `+3` se categoria bater (`music`, `movie_clip`, `series_clip`, `anime_clip`)
-- `+2` se tags de genero baterem
-- `+2` se o aluno errou essa lesson anteriormente e precisa revisar
-- `-3` se a lesson foi concluida com score alto recentemente
+| Entidade | Papel | Relacoes |
+| --- | --- | --- |
+| `User` | usuario do sistema | 1:N com `Lesson`, 1:N com `Submission`, 1:1 com `StudentProfile` |
+| `StudentProfile` | preferencias e onboarding | 1:1 com `User` |
+| `WaitlistSignup` | lead da landing | isolado |
+| `Lesson` | item do feed | N:1 com `User(teacher)`, 1:1 com `Exercise` |
+| `Exercise` | desafio de uma lesson | 1:1 com `Lesson`, 1:N com `ExerciseLine`, 1:N com `Submission` |
+| `ExerciseLine` | linha da pratica | N:1 com `Exercise` |
+| `Submission` | tentativa do aluno | N:1 com `User(student)`, N:1 com `Exercise`, 1:N com `SubmissionLine` |
+| `SubmissionLine` | resultado por linha | N:1 com `Submission`, N:1 opcional com `ExerciseLine` |
+| `EmailDelivery` | fila de e-mails | isolado |
 
-Ordenar por score desc e usar `created_at` como desempate.
+### Observacoes De Modelagem
 
-## Fluxo Da Tela De Pratica
+- `Lesson` e a unidade principal do feed; nao existe conceito de curso ou modulo
+- cada `Lesson` tem exatamente um `Exercise`
+- `Exercise` pode ter multiplas `ExerciseLine`
+- `Submission` nasce em `pending`
+- scores do backend ainda nao sao processados por pipeline confiavel
+- idempotencia de envio e garantida por `client_submission_id` por aluno
 
-### Objetivo
+## Logica De Feed Personalizado
 
-Entregar a sensacao de Guitar Hero/Karaoke, mas baseada em frases de cultura pop que o aluno gosta.
+Implementada em `backend/learning/api.py`.
 
-### Componentes Da Tela
+Sinais usados hoje:
 
-- topo com combo, score e velocidade
-- lane central com linhas descendo
-- destaque da linha atual
-- preenchimento karaoke por palavra correta
-- mic status no rodape
-- modal ou bottom sheet de coach IA ao detectar erro
+- match textual com `favorite_songs`
+- match textual com `favorite_movies`
+- match textual com `favorite_series`
+- match textual com `favorite_anime`
+- match textual com `favorite_artists`
+- match textual com `favorite_genres`
+- pequeno bonus por compatibilidade de `content_type`
+- tentativa de usar historico por `final_score`
 
-### Logica Da Fase 1
+Limitacao importante:
 
-Sem streaming real ainda:
+- o codigo consulta `Submission.final_score` para sugerir review/mastery
+- hoje nao existe processor que preencha `final_score`
+- na pratica, a personalizacao real depende quase toda de match de preferencias declaradas
 
-1. a linha desce com `AnimationController`
-2. o aluno grava a linha
-3. o app envia o audio ao backend ou envia o transcript retornado pelo STT
-4. o backend responde com score e feedback
-5. o app pinta a linha como correta ou pausa para coaching
+## Contrato De Submission
 
-### Logica Da Fase 2
+Payload aceito:
 
-Com streaming:
+- `exercise_id`
+- `client_submission_id`
+- `transcript_en`
+- `transcript_pt`
+- `line_results[]`
 
-1. o microfone fica aberto
-2. o backend recebe audio incremental
-3. o provider de STT devolve transcript parcial
-4. o app vai preenchendo a frase em tempo real
-5. se a divergencia persistir acima do threshold, a sessao pausa
+Comportamento atual:
 
-## IA E Pronuncia
+- se `client_submission_id` ja existe para o aluno, backend retorna a mesma submission
+- backend persiste apenas texto e vinculo de linha
+- scores e feedback enviados pelo cliente sao descartados
+- `SubmissionLine` e criada como `pending`, sem score confiavel
 
-### Regra Pratica
+Conclusao:
 
-Nao construir modelo proprio agora.
+- o mobile pode usar heuristicas locais para UX
+- o backend preserva neutralidade para uma avaliacao futura mais confiavel
 
-Usar um provider pronto de speech/pronunciation para o MVP. Recomendacao principal:
+## Web Client
 
-- Azure Speech Pronunciation Assessment
+### Escopo Atual
 
-Alternativas:
+- landing page publica
+- CTA de waitlist
+- tela de login/cadastro do aluno
+- portal autenticado para links Android
 
-- Speechace
-- Deepgram + camada pedagogica propria
+### Arquitetura Atual
 
-### Responsabilidades Da IA
+- `frontend/src/App.tsx` controla as rotas
+- `frontend/src/pages/Home.tsx` escolhe entre landing e portal autenticado
+- `frontend/src/lib/auth.ts` salva sessao em `localStorage`
 
-- transcrever a fala
-- calcular score geral
-- calcular score por palavra
-- apontar palavras problemáticas
-- devolver feedback curto e pedagogico em pt-BR
+### Limites Atuais
 
-### Formato De Feedback Esperado
+- nao ha feed web
+- nao ha lesson detail web
+- nao ha teacher dashboard web
+- nao ha onboarding web
 
-```json
-{
-  "accuracy_score": 81,
-  "pronunciation_score": 77,
-  "wrong_words": ["thought"],
-  "coach_message": "Em thought, faca o th com a lingua entre os dentes e mantenha o som aberto de o.",
-  "phonetic_hint": "thot"
-}
-```
+## Mobile Client
 
-## Offline-First Em Fases
+### Arquitetura Atual
 
-### Fase 1
+Camadas principais:
 
-- tokens persistidos localmente
-- cache simples do ultimo perfil
-- cache simples das ultimas lessons abertas
+- `app/`: bootstrap, tema e rotas
+- `core/models.dart`: contratos tipados
+- `core/repositories.dart`: HTTP, storage e cache local
+- `core/state.dart`: estado global com Riverpod
+- `features/`: auth, onboarding, feed e practice
+- `shared/`: componentes HUD reutilizaveis
 
-### Fase 2
+### Fluxo De Sessao
 
-- persistir feed recente localmente
-- baixar audio/textos das lessons favoritas
-- fila local de `Submission` pendente quando offline
+1. app abre em `/`
+2. splash carrega base URL e sessao persistida
+3. tenta `GET /auth/me`
+4. se offline, reaproveita sessao armazenada
+5. se token expirou, tenta refresh
+6. se profile nao estiver onboarded, manda para onboarding
+7. senao, manda para feed
 
-Nao tentar implementar sincronizacao completa offline no primeiro build do app.
+### Offline-First No Mobile
 
-## Plano De Entrega
+Persistencia local:
 
-### Marco 0 - Bootstrap
+- sessao em `FlutterSecureStorage`
+- profile em `SharedPreferences`
+- feed em `SharedPreferences`
+- lesson detail em `SharedPreferences`
+- fila de submissions em `SharedPreferences`
 
-1. criar pasta `mobile/`
-2. configurar Riverpod, GoRouter, Dio e SecureStorage
-3. portar tema cyberpunk para Flutter
-4. criar `Splash`, `Login` e `Register`
+Comportamento:
 
-### Marco 1 - Auth Fechado
+- leitura de profile/feed/lesson faz fallback para cache quando erro parece offline
+- `submitPractice` faz fila local se a conexao falhar
+- `syncPendingSubmissions` roda antes do carregamento do feed personalizado
 
-1. integrar `register`, `login`, `refresh`, `me`
-2. guardar tokens com refresh automatico
-3. bloquear app para role `student`
-4. redirect para onboarding apos cadastro/login
+### Limites Atuais Do Mobile
 
-### Marco 2 - Onboarding
+- sincronizacao roda em momento oportunista, nao em background real
+- reconhecimento de fala e local, sem scoring server-side
+- foto de perfil e apenas local, sem upload para backend
+- nao existe tela de historico de progresso do aluno
 
-1. criar `StudentProfile` no backend
-2. criar endpoints `/api/profile/*`
-3. tela multipasso de gostos
-4. salvar gostos e marcar `onboarding_completed`
+## Operacao E Infra
 
-### Marco 3 - Feed Personalizado
+### Banco
 
-1. criar ranking simples no backend
-2. adicionar metadados de tags/dificuldade nas lessons
-3. criar feed mobile com cards HUD
-4. CTA `Praticar agora`
+- PostgreSQL como banco principal
+- sem suporte real a SQLite
 
-### Marco 4 - Pratica MVP
+### Cache
 
-1. adicionar `ExerciseLine`
-2. adaptar detalhe da lesson para varias linhas
-3. criar tela de pratica com animacao de descida
-4. gravar audio por linha
-5. avaliar linha e mostrar coach IA
-6. salvar tentativa final em `Submission`
+- Redis quando `CACHE_URL` aponta para redis
+- fallback para `LocMemCache` quando nao ha Redis
+- cache versionado para feed publico e lesson detail
 
-### Marco 5 - Realtime
+### Filas
 
-1. websocket de pratica
-2. transcript parcial em tempo real
-3. preenchimento karaoke por palavra
-4. pausa automatica por erro
+- Celery worker processa entregas de e-mail
+- Celery beat agenda:
+  - dispatch de e-mails pendentes
+  - reminders de inatividade
+  - checks operacionais
 
-### Marco 6 - Offline E Polimento
+### Health Check
 
-1. cache local do feed
-2. fila de submissao pendente
-3. analytics basico de progresso
-4. polimento de animacoes, sons e HUD
+`GET /api/health` valida:
 
-## Ordem Recomendada De Implementacao No Modo Build
+- banco
+- cache
+- broker
+- thresholds operacionais carregados
 
-1. criar `mobile/` com tema, router e auth
-2. adicionar `StudentProfile` e endpoints de perfil no backend
-3. implementar onboarding Flutter
-4. criar feed personalizado no backend
-5. implementar feed Flutter
-6. adicionar `ExerciseLine` e adaptar detail endpoint
-7. implementar pratica frase-a-frase
-8. integrar IA de pronuncia
-9. evoluir para realtime
+### Docker Compose
 
-## Comandos Iniciais
+Stack local prevista:
 
-```bash
-flutter create mobile
-cd mobile
-flutter pub add flutter_riverpod go_router dio flutter_secure_storage record permission_handler just_audio web_socket_channel freezed_annotation json_annotation
-flutter pub add --dev build_runner freezed json_serializable
-```
+- `db`
+- `redis`
+- `backend`
+- `worker`
+- `beat`
+- `frontend`
 
-Para rodar localmente em Android emulator:
+### CI
 
-```bash
-flutter run \
-  --dart-define=API_BASE_URL=http://10.0.2.2:8000/api \
-  --dart-define=WS_BASE_URL=ws://10.0.2.2:8000/ws
-```
+GitHub Actions executa:
 
-## Primeiro Slice Que Deve Ser Construido Agora
+- backend: `python manage.py check` e `python manage.py test`
+- frontend: `npm run test` e `npm run build`
 
-Se o proximo passo for implementacao, a ordem ideal e:
+### Mobile CI
 
-1. criar o app Flutter em `mobile/`
-2. montar tema cyberpunk HUD
-3. integrar login/cadastro com o backend atual
-4. adicionar `StudentProfile` no backend
-5. construir onboarding de gostos
+Codemagic roda:
 
-Esse caminho entrega valor rapido, reduz risco e prepara o terreno para o feed personalizado e a pratica estilo Guitar Hero sem forcar arquitetura prematura.
+- `flutter pub get`
+- `flutter test`
+- build iOS simulator
+
+## Seguranca E Riscos Tecnicos
+
+### Pontos Positivos
+
+- user customizado ja consolidado
+- roles separadas em nivel de dominio
+- endpoints protegidos por Bearer JWT
+- idempotencia para submissions mobile
+
+### Gaps Reais
+
+- JWT custom sem revogacao ou rotation
+- web guarda token em `localStorage`
+- `CORS_ALLOW_ALL_ORIGINS=True` por default
+- `SECRET_KEY` e `JWT_SECRET_KEY` tem fallbacks inseguros
+- teacher signup pode ficar publico em ambientes mal configurados
+
+## Testes
+
+### Backend
+
+Cobre bem o MVP para:
+
+- auth e profile
+- waitlist
+- feed e lesson detail
+- submissions com idempotencia
+- scheduler e checks operacionais
+
+### Frontend
+
+Cobertura atual insuficiente. Existe apenas teste basico placeholder.
+
+### Mobile
+
+Cobertura ainda leve para a complexidade do fluxo offline/practice.
+
+## Decisoes Tecnicas Recomendadas Para O Proximo Ciclo
+
+### 1. Endurecer O Que Ja Existe
+
+- remover defaults inseguros de producao
+- revisar CORS e teacher signup por ambiente
+- aumentar testes de auth web e offline mobile
+
+### 2. Fechar O Loop De Aprendizagem
+
+- implementar processor server-side para `Submission`
+- preencher `score_en`, `score_pt`, `final_score`, `processed_at`
+- tornar o feed personalizado dependente de sinais de aprendizado reais
+
+### 3. Evoluir As Superficies Certas
+
+- usar o web para professor e operacao antes de transformar a web em experiencia de aluno completa
+- manter o mobile como superficie principal para pratica
+
+### 4. Melhorar Telemetria
+
+- eventos de onboarding
+- eventos de inicio/fim de pratica
+- taxa de sync offline -> online
+- backlog operacional por ambiente
+
+## Fonte De Verdade
+
+Para leitura rapida do sistema, os arquivos mais importantes hoje sao:
+
+- `backend/config/api.py`
+- `backend/accounts/api.py`
+- `backend/learning/api.py`
+- `backend/operations/tasks.py`
+- `mobile/lib/core/repositories.dart`
+- `mobile/lib/core/state.dart`
+- `frontend/src/App.tsx`
+- `frontend/src/lib/auth.ts`
+
+Esses arquivos devem continuar sendo a referencia principal para evolucao de contrato, fluxo e responsabilidades.

@@ -55,7 +55,7 @@ const CTASection = () => {
       >
         <div className="font-mono-vibe text-xs text-secondary mb-4">// experimente sem pagar nada</div>
         <h2 className="mb-6 font-display text-3xl sm:text-6xl">
-          Pronto pra <span className="text-gradient-vibe">entrar na vibe?</span>
+          Pronto para <span className="text-gradient-vibe">entrar na vibe?</span>
         </h2>
         <p className="text-muted-foreground max-w-xl mx-auto mb-10">
           Vagas limitadas no beta fechado. Garanta a sua antes que vire mainstream.
@@ -79,7 +79,7 @@ const CTASection = () => {
             disabled={isSubmitting}
             className="inline-flex w-full items-center justify-center gap-2 bg-primary px-6 py-4 font-mono-vibe text-sm text-primary-foreground transition-transform hover:scale-[1.02] glow-pink sm:w-auto"
           >
-            {isSubmitting ? "ENVIANDO" : "ENTRAR"} <ArrowRight className="h-4 w-4" />
+            {isSubmitting ? "ENVIANDO" : "ENTRAR NO BETA ->"}
           </button>
         </form>
       </div>

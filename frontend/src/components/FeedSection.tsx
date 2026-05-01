@@ -31,20 +31,20 @@ const features = [
 const FeedSection = () => {
   return (
     <section id="feed" className="container py-20 sm:py-28">
-      <div className="mb-12 max-w-3xl sm:mb-16">
-        <div className="font-mono-vibe text-xs text-secondary mb-4">// 02_THE_FEED</div>
+      <div className="mx-auto mb-12 max-w-5xl text-center sm:mb-16">
+        <div className="font-mono-vibe text-xs text-secondary mb-4">// 01_THE_FEED</div>
         <h2 className="mb-6 font-display text-3xl sm:text-5xl">
           Não é app de estudo. <br />
           É <span className="text-gradient-vibe">vício produtivo.</span>
         </h2>
-        <p className="text-muted-foreground text-lg">
+        <p className="mx-auto max-w-4xl text-lg text-muted-foreground">
           A educação tradicional é entediante; o feed é viciante. O{" "}
           <span className="font-display font-bold text-gradient-vibe">VIBE_STUDYING</span> junta o aprendizado com músicas,
           filmes, animes e desenhos do seu interesse e transforma tudo em um feed viciante.
         </p>
       </div>
 
-      <div className="grid gap-px border border-primary/20 bg-primary/20 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mx-auto grid max-w-5xl gap-px border border-primary/20 bg-primary/20 sm:grid-cols-2">
         {features.map((f, i) => (
           <motion.article
             key={f.title}
@@ -52,7 +52,7 @@ const FeedSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.05 }}
-            className="relative bg-background p-6 transition-colors group hover:bg-card sm:p-8"
+            className="relative min-h-[240px] bg-background p-6 transition-colors group hover:bg-card sm:p-8"
           >
             <div className={`inline-flex h-12 w-12 items-center justify-center border ${f.cls} mb-5 group-hover:scale-110 transition-transform`}>
               <f.icon className="h-5 w-5" />
