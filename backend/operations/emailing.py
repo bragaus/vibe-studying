@@ -1,8 +1,27 @@
+import logging
+
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from operations.models import EmailDelivery
+
+
+logger = logging.getLogger(__name__)
+
+
+def _enqueue_email_delivery_after_commit(delivery_id: int) -> None:
+    from operations.tasks import deliver_email_task
+
+    try:
+        deliver_email_task.delay(delivery_id)
+    except Exception as exc:
+        # O e-mail continua salvo como pending para reprocessamento posterior,
+        # mas o fluxo principal da API nao pode quebrar se o broker estiver offline.
+        logger.warning(
+            "email delivery queued without broker dispatch",
+            extra={"delivery_id": delivery_id, "error": str(exc)},
+        )
 
 
 def render_email_delivery(delivery: EmailDelivery) -> tuple[str, str]:
@@ -90,9 +109,7 @@ def queue_email_delivery(
         created = True
 
     if created and delivery.scheduled_for <= timezone.now():
-        from operations.tasks import deliver_email_task
-
-        transaction.on_commit(lambda: deliver_email_task.delay(delivery.pk))
+        transaction.on_commit(lambda: _enqueue_email_delivery_after_commit(delivery.pk))
 
     return delivery, created
 

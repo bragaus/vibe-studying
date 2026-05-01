@@ -48,13 +48,13 @@ const CTASection = () => {
   };
 
   return (
-    <section className="container py-28">
+    <section className="container py-20 sm:py-28">
       <div
-        className="relative overflow-hidden border border-primary/40 p-10 sm:p-16 text-center scanlines"
+        className="relative overflow-hidden border border-primary/40 p-6 text-center scanlines sm:p-10 lg:p-16"
         style={{ background: "var(--gradient-glow)" }}
       >
-        <div className="font-mono-vibe text-xs text-secondary mb-4">// 06_JOIN_BETA</div>
-        <h2 className="font-display text-4xl sm:text-6xl mb-6">
+        <div className="font-mono-vibe text-xs text-secondary mb-4">// experimente sem pagar nada</div>
+        <h2 className="mb-6 font-display text-3xl sm:text-6xl">
           Pronto pra <span className="text-gradient-vibe">entrar na vibe?</span>
         </h2>
         <p className="text-muted-foreground max-w-xl mx-auto mb-10">
@@ -77,7 +77,7 @@ const CTASection = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono-vibe text-sm px-6 py-4 hover:scale-[1.02] transition-transform glow-pink"
+            className="inline-flex w-full items-center justify-center gap-2 bg-primary px-6 py-4 font-mono-vibe text-sm text-primary-foreground transition-transform hover:scale-[1.02] glow-pink sm:w-auto"
           >
             {isSubmitting ? "ENVIANDO" : "ENTRAR"} <ArrowRight className="h-4 w-4" />
           </button>

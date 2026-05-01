@@ -1,61 +1,50 @@
 import { motion } from "framer-motion";
-import { Headphones, Mic, Sparkles, Infinity as InfinityIcon, Film, Brain } from "lucide-react";
+import { Mic, Infinity as InfinityIcon, Film, Brain } from "lucide-react";
 
 const features = [
   {
     icon: InfinityIcon,
     title: "Feed infinito que ensina",
-    desc: "Substitui o scroll vazio por pílulas de conhecimento de 30s a 3min. Aprenda enquanto procrastina.",
+    desc: "Transforma o seu interesse em um fluxo contínuo de estudo com conteúdo que você realmente quer consumir.",
     cls: "border-primary text-primary",
   },
   {
     icon: Mic,
-    title: "Prática guiada por linhas",
-    desc: "A base atual ja suporta exercicios por linha e submissao de tentativas, preparando o caminho para feedback automatizado depois.",
+    title: "Prática guiada",
+    desc: "Exercícios gamificados com feedback automatizado para ensinar a pronúncia correta do idioma.",
     cls: "border-secondary text-secondary",
   },
   {
     icon: Film,
-    title: "Anime · Música · Filme",
-    desc: "Aprenda inglês com Jujutsu Kaisen, Billie Eilish ou Tarantino. Cultura pop como currículo.",
+    title: "Música · Anime · Desenho · Filme",
+    desc: "Aprenda japonês com Naruto, inglês com Billie Eilish ou com o seu personagem favorito.",
     cls: "border-neon-yellow text-neon-yellow",
   },
   {
     icon: Brain,
-    title: "Microlearning ativo",
-    desc: "Spaced repetition + gatilhos emocionais. Você não memoriza, você vibra.",
+    title: "Aprendizado ativo",
+    desc: "O estudo acontece dentro do que você gosta de assistir, ouvir e repetir, sem depender de uma aula engessada.",
     cls: "border-neon-purple text-neon-purple",
-  },
-  {
-    icon: Headphones,
-    title: "Roadmap offline-first",
-    desc: "O app Flutter ja esta no monorepo com login, onboarding e feed. O proximo passo e fechar cache local e sincronizacao pendente.",
-    cls: "border-secondary text-secondary",
-  },
-  {
-    icon: Sparkles,
-    title: "Estética wired",
-    desc: "Alto contraste, neon e glitch. Um app que parece um boss fight de cyberpunk.",
-    cls: "border-primary text-primary",
   },
 ];
 
 const FeedSection = () => {
   return (
-    <section id="feed" className="container py-28">
-      <div className="max-w-3xl mb-16">
+    <section id="feed" className="container py-20 sm:py-28">
+      <div className="mb-12 max-w-3xl sm:mb-16">
         <div className="font-mono-vibe text-xs text-secondary mb-4">// 02_THE_FEED</div>
-        <h2 className="font-display text-4xl sm:text-5xl mb-6">
+        <h2 className="mb-6 font-display text-3xl sm:text-5xl">
           Não é app de estudo. <br />
           É <span className="text-gradient-vibe">vício produtivo.</span>
         </h2>
         <p className="text-muted-foreground text-lg">
-          A educação tradicional é entediante. O feed é viciante. O Vibe Studying junta os dois num
-          experimento de UX que sequestra sua atenção — e devolve em forma de aprendizado.
+          A educação tradicional é entediante; o feed é viciante. O{" "}
+          <span className="font-display font-bold text-gradient-vibe">VIBE_STUDYING</span> junta o aprendizado com músicas,
+          filmes, animes e desenhos do seu interesse e transforma tudo em um feed viciante.
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-primary/20 border border-primary/20">
+      <div className="grid gap-px border border-primary/20 bg-primary/20 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((f, i) => (
           <motion.article
             key={f.title}
@@ -63,15 +52,15 @@ const FeedSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.05 }}
-            className="bg-background p-8 group hover:bg-card transition-colors relative"
+            className="relative bg-background p-6 transition-colors group hover:bg-card sm:p-8"
           >
             <div className={`inline-flex h-12 w-12 items-center justify-center border ${f.cls} mb-5 group-hover:scale-110 transition-transform`}>
               <f.icon className="h-5 w-5" />
             </div>
-            <h3 className="font-display text-xl mb-3">{f.title}</h3>
+            <h3 className="mb-3 font-display text-lg sm:text-xl">{f.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             <div className="absolute top-4 right-4 font-mono-vibe text-[10px] text-muted-foreground">
-              0{i + 1}/06
+              0{i + 1}/04
             </div>
           </motion.article>
         ))}

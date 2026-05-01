@@ -40,7 +40,13 @@ function readStoredUser(rawUser: string | null): SessionUser | null {
 }
 
 export function getApiBaseUrl() {
-  return (import.meta.env.VITE_API_URL || "https://backendvibestudying.planoartistico.com/api").replace(/\/$/, "");
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (!apiBaseUrl) {
+    throw new Error("VITE_API_URL is not configured.");
+  }
+
+  return apiBaseUrl.replace(/\/$/, "");
 }
 
 export function persistSession(payload: AuthResponsePayload) {

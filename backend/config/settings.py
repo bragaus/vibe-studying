@@ -35,12 +35,15 @@ def env_list(name: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-vibe-studying-secret-key")
 DEBUG = env_bool("DEBUG", default=False)
 
-PUBLIC_API_HOST = "backendvibestudying.planoartistico.com"
-PUBLIC_API_ORIGIN = f"https://{PUBLIC_API_HOST}"
+PUBLIC_API_HOST = os.getenv("PUBLIC_API_HOST", "")
+PUBLIC_API_ORIGIN = os.getenv(
+    "PUBLIC_API_ORIGIN",
+    f"https://{PUBLIC_API_HOST}" if PUBLIC_API_HOST else "",
+)
 LOCAL_DEV_HOSTS = ["localhost", "127.0.0.1", "testserver"]
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    ",".join([PUBLIC_API_HOST, *LOCAL_DEV_HOSTS]),
+    ",".join([*([PUBLIC_API_HOST] if PUBLIC_API_HOST else []), *LOCAL_DEV_HOSTS]),
 )
 
 
@@ -147,7 +150,10 @@ LOCAL_DEV_ORIGINS = [
     'http://localhost:8080',
     'http://127.0.0.1:8080',
 ]
-DEFAULT_CSRF_TRUSTED_ORIGINS = [PUBLIC_API_ORIGIN, *LOCAL_DEV_ORIGINS]
+DEFAULT_CSRF_TRUSTED_ORIGINS = [
+    *([PUBLIC_API_ORIGIN] if PUBLIC_API_ORIGIN else []),
+    *LOCAL_DEV_ORIGINS,
+]
 
 # O backend precisa aceitar qualquer origem para o frontend publicado e futuros clientes.
 CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)

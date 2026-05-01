@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Mic } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-vibe.jpg";
 import { Link } from "react-router-dom";
 
@@ -7,7 +7,7 @@ const Hero = () => {
   return (
     <section
       id="top"
-      className="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden scanlines"
+      className="relative flex min-h-screen items-center overflow-hidden pb-16 pt-40 scanlines sm:pb-20 md:pt-24"
     >
       {/* Background image */}
       <div className="absolute inset-0 -z-10">
@@ -22,7 +22,7 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
       </div>
 
-      <div className="container grid lg:grid-cols-12 gap-10 items-center">
+      <div className="container grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-7">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -31,20 +31,20 @@ const Hero = () => {
             className="font-mono-vibe text-xs text-secondary mb-6 inline-flex items-center gap-2 border border-secondary/40 px-3 py-1"
           >
             <span className="h-2 w-2 bg-secondary rounded-full animate-pulse" />
-            SYS::ONLINE — beta v0.4.2
+            Estudar pode ser legal:
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.1 }}
-            className="font-display text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mb-6"
+            className="mb-6 font-display text-[clamp(3rem,12vw,5.5rem)] leading-[0.95]"
           >
             <span className="glitch text-foreground" data-text="ESTUDE">ESTUDE</span>{" "}
             <span className="text-gradient-vibe">NA VIBE.</span>
             <br />
-            <span className="text-2xl sm:text-3xl lg:text-4xl font-sans font-normal text-muted-foreground tracking-normal">
-              o feed que <em className="not-italic text-secondary">ensina</em>.
+            <span className="font-sans text-[clamp(1.5rem,7vw,2.25rem)] font-normal tracking-normal text-muted-foreground lg:text-4xl">
+              <em className="not-italic text-secondary">Aprendizado viciante</em>.
             </span>
           </motion.h1>
 
@@ -52,48 +52,32 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.9, delay: 0.3 }}
-            className="text-lg text-muted-foreground max-w-xl mb-10"
+            className="mb-10 max-w-xl text-base text-muted-foreground sm:text-lg"
           >
-            Microlearning viciante baseado em <strong className="text-foreground">anime, música e filmes</strong>.
-            Avaliação de pronúncia em tempo real com IA. Pílulas de conhecimento entre um scroll e outro —
-            sem aula chata, sem tédio.
+            Aprenda com <strong className="text-foreground">músicas, filmes, animes e desenhos</strong> do seu interesse.
+            O Vibe Studying transforma o estudo em uma experiência leve, visual e feita para prender a sua atenção.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
-            className="flex flex-wrap items-center gap-4"
+            className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
           >
             <Link
               id="cta"
               to="/auth"
-              className="group inline-flex items-center gap-2 font-mono-vibe text-sm bg-primary text-primary-foreground px-6 py-4 glow-pink hover:scale-[1.02] transition-transform"
+              className="group inline-flex items-center justify-center gap-2 bg-primary px-6 py-4 font-mono-vibe text-sm text-primary-foreground transition-transform hover:scale-[1.02] glow-pink"
             >
-              ENTRAR_NA_VIBE
+              LOGIN
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            
-            <a
-              href="#stack"
-              className="inline-flex items-center gap-2 font-mono-vibe text-sm border border-secondary/60 text-secondary px-6 py-4 hover:bg-secondary/10 transition-colors"
-            >
-              <Mic className="h-4 w-4" />
-              ouvir o demo
-            </a>
           </motion.div>
 
-          <div className="mt-12 grid grid-cols-3 gap-6 max-w-md font-mono-vibe">
-            {[
-              { k: "12k+", v: "alunos beta" },
-              { k: "98%", v: "retenção 7d" },
-              { k: "<3min", v: "por pílula" },
-            ].map((s) => (
-              <div key={s.v}>
-                <div className="text-2xl text-gradient-vibe font-display">{s.k}</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{s.v}</div>
-              </div>
-            ))}
+          <div className="mt-12 max-w-2xl mx-auto text-center">
+            <p className="font-display text-xl text-gradient-vibe sm:text-2xl">
+              Aprenda qualquer idioma na vibe.
+            </p>
           </div>
         </div>
 

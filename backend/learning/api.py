@@ -7,6 +7,7 @@ Separacao atual:
 """
 
 from datetime import datetime
+import logging
 
 from django.conf import settings
 from django.core.cache import cache
@@ -27,6 +28,7 @@ teacher_router = Router()
 submission_router = Router()
 
 CONTENT_CACHE_VERSION_KEY = "learning:content-cache-version"
+logger = logging.getLogger(__name__)
 
 
 class ExerciseLineSchema(Schema):
@@ -169,9 +171,17 @@ def normalize_keyword(value: str) -> str:
 
 
 def get_content_cache_version() -> int:
-    cache_version = cache.get(CONTENT_CACHE_VERSION_KEY)
+    try:
+        cache_version = cache.get(CONTENT_CACHE_VERSION_KEY)
+    except Exception as exc:
+        logger.warning("content cache read failed", extra={"error": str(exc)})
+        return 1
+
     if cache_version is None:
-        cache.set(CONTENT_CACHE_VERSION_KEY, 1, timeout=None)
+        try:
+            cache.set(CONTENT_CACHE_VERSION_KEY, 1, timeout=None)
+        except Exception as exc:
+            logger.warning("content cache seed failed", extra={"error": str(exc)})
         return 1
     return int(cache_version)
 
@@ -179,8 +189,26 @@ def get_content_cache_version() -> int:
 def bump_content_cache_version() -> int:
     current_version = get_content_cache_version()
     next_version = current_version + 1
-    cache.set(CONTENT_CACHE_VERSION_KEY, next_version, timeout=None)
+    try:
+        cache.set(CONTENT_CACHE_VERSION_KEY, next_version, timeout=None)
+    except Exception as exc:
+        logger.warning("content cache version bump failed", extra={"error": str(exc)})
     return next_version
+
+
+def safe_cache_get(cache_key: str):
+    try:
+        return cache.get(cache_key)
+    except Exception as exc:
+        logger.warning("cache get failed", extra={"cache_key": cache_key, "error": str(exc)})
+        return None
+
+
+def safe_cache_set(cache_key: str, value, timeout: int) -> None:
+    try:
+        cache.set(cache_key, value, timeout=timeout)
+    except Exception as exc:
+        logger.warning("cache set failed", extra={"cache_key": cache_key, "error": str(exc)})
 
 
 def build_public_feed_cache_key(cursor: int | None, limit: int) -> str:
@@ -439,7 +467,7 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
         raise HttpError(400, "Limit must be between 1 and 50.")
 
     cache_key = build_public_feed_cache_key(cursor, limit)
-    cached_response = cache.get(cache_key)
+    cached_response = safe_cache_get(cache_key)
     if cached_response is not None:
         return FeedResponseSchema.model_validate(cached_response)
 
@@ -456,7 +484,11 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
         items=[serialize_lesson_feed_item(lesson) for lesson in lessons],
         next_cursor=next_cursor,
     )
-    cache.set(cache_key, response.model_dump(mode="json"), timeout=settings.PUBLIC_FEED_CACHE_TIMEOUT_SECONDS)
+    safe_cache_set(
+        cache_key,
+        response.model_dump(mode="json"),
+        timeout=settings.PUBLIC_FEED_CACHE_TIMEOUT_SECONDS,
+    )
     return response
 
 
@@ -491,7 +523,7 @@ def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
 @public_router.get("/lessons/{slug}", response=LessonDetailSchema)
 def get_lesson_detail(request, slug: str):
     cache_key = build_lesson_detail_cache_key(slug)
-    cached_response = cache.get(cache_key)
+    cached_response = safe_cache_get(cache_key)
     if cached_response is not None:
         return LessonDetailSchema.model_validate(cached_response)
 
@@ -500,7 +532,11 @@ def get_lesson_detail(request, slug: str):
         slug=slug,
     )
     response = serialize_lesson_detail(lesson)
-    cache.set(cache_key, response.model_dump(mode="json"), timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS)
+    safe_cache_set(
+        cache_key,
+        response.model_dump(mode="json"),
+        timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS,
+    )
     return response
 
 

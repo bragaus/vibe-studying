@@ -10,7 +10,17 @@ from operations.models import EmailDelivery
 from operations.tasks import deliver_email_task, run_operational_checks_task, schedule_inactivity_reminders_task
 
 
-@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    CELERY_BROKER_URL="memory://",
+    CELERY_RESULT_BACKEND="cache+memory://",
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "operations-tests",
+        }
+    },
+)
 class OperationsTests(TestCase):
     def test_health_endpoint_returns_component_statuses(self):
         response = self.client.get("/api/health")

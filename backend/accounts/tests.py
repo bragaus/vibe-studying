@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 
 from accounts.models import StudentProfile, User, WaitlistSignup
@@ -150,3 +152,20 @@ class AuthApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+    @patch("operations.emailing._enqueue_email_delivery_after_commit", side_effect=RuntimeError("broker offline"))
+    def test_student_register_does_not_fail_when_email_broker_is_unavailable(self, _enqueue_email_delivery_after_commit):
+        response = self.client.post(
+            "/api/auth/register",
+            data={
+                "email": "broker-offline@example.com",
+                "password": "StrongPass123!",
+                "first_name": "Bro",
+                "last_name": "Ker",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(User.objects.filter(email="broker-offline@example.com").exists())
+        self.assertEqual(EmailDelivery.objects.filter(recipient_email="broker-offline@example.com").count(), 1)
