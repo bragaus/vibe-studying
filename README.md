@@ -1,105 +1,60 @@
-<h1 align="center">Vibe Studying</h1>
+# Vibe Studying
 
-<p align="center">
-  O Vibe Studying é um projeto educacional que transforma a lógica do feed infinito em uma experiência de estudo.
-  Em vez de consumir conteúdo vazio, o usuário navega por lessons curtas inspiradas na cultura pop, com foco em aprendizagem rápida e repetível.
-</p>
+Vibe Studying e um monorepo educacional mobile-first focado em microlearning de ingles com cultura pop.
 
-<p align="center">
-  <img alt="Status" src="https://img.shields.io/badge/status-MVP-ff2ea6?style=for-the-badge">
-  <img alt="Frontend" src="https://img.shields.io/badge/frontend-React%20%2B%20Vite-61dafb?style=for-the-badge&logo=react&logoColor=000">
-  <img alt="Backend" src="https://img.shields.io/badge/backend-Django%20Ninja-0c4b33?style=for-the-badge&logo=django&logoColor=white">
-  <img alt="Language" src="https://img.shields.io/badge/language-TypeScript%20%2B%20Python-7c3aed?style=for-the-badge">
-  <img alt="Database" src="https://img.shields.io/badge/database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white">
-</p>
+Hoje o projeto esta dividido assim:
 
-<p align="center">
-  <img src="./frontend/src/assets/hero-vibe.jpg" alt="Capa do Vibe Studying" width="100%" />
-</p>
+- `backend/`: API Django + Django Ninja, auth JWT custom, profile, onboarding, feed, lessons, submissions, cache, e-mails e health check
+- `frontend/`: landing publica, auth web simples e portal autenticado para distribuicao de links Android
+- `mobile/`: app Flutter do aluno com onboarding, feed personalizado, pratica estilo HUD e fila offline de tentativas
 
-## Visão Geral
+## Estado Atual
 
-O projeto foi estruturado como um desafio técnico end-to-end e, hoje, já entrega uma base funcional com:
+Ja implementado no codigo:
 
-- landing page pública com identidade visual forte
-- autenticação com JWT customizado
-- cadastro separado para aluno e professor
-- feed público de lessons publicadas
-- detalhe de lesson com exercise vinculado
-- criação e edição de lessons pelo professor
-- envio e consulta de submissions pelo aluno
-- testes básicos no backend e no frontend
+- waitlist publica na landing
+- cadastro e login de aluno e professor
+- onboarding de gostos e nivel de ingles
+- feed publico e feed personalizado
+- criacao e edicao de lessons pelo professor
+- detail de lesson com multiplas linhas de pratica
+- submissions do aluno com idempotencia
+- cache local no mobile
+- fila offline de tentativas no mobile
+- e-mails transacionais, reminders e checks operacionais no backend
 
-## Status Atual
+## Documentacao Do Projeto
 
-- O que está implementado no código: landing page, tela de autenticação, API em Django Ninja, domínio de learning, JWT e testes principais.
-- O que aparece como visão de produto na interface: IA de pronúncia, app Flutter e workflows assíncronos.
-- O que ainda não está implementado neste repositório: pipeline real de IA, app mobile versionado aqui e orquestração com Temporal.
+- `PRD.md`: visao de produto e roadmap realista
+- `TechSpecs.md`: arquitetura, contratos e gaps tecnicos
+- `DESIGN.md`: diretrizes de UX, sistema visual e copy
+- `backend/README.md`: setup e operacao do backend
+- `frontend/README.md`: setup e operacao do frontend
+- `mobile/README.md`: setup do Flutter e execucao do app
 
-## Stack
+## Requisitos Do Monorepo
 
-| Camada | Tecnologia |
-| --- | --- |
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui e Framer Motion |
-| Backend | Django 6, Django Ninja e JWT customizado |
-| Banco | PostgreSQL |
-| Testes | Vitest, Testing Library e Django TestCase |
-| UX | Visual cyberpunk, alto contraste e linguagem inspirada em HUD/feed |
-
-## Arquitetura
-
-```mermaid
-flowchart LR
-    A[Landing + Auth<br/>React/Vite] --> B[API /api<br/>Django Ninja]
-    B --> C[Accounts]
-    B --> D[Learning]
-    C --> E[(PostgreSQL)]
-    D --> E
-    D --> F[Lessons]
-    D --> G[Exercises]
-    D --> H[Submissions]
-```
-
-## Fluxo Principal
-
-1. O usuário cria uma conta ou faz login via `api/auth/*`.
-2. O backend retorna `access_token`, `refresh_token` e os dados resumidos do usuário.
-3. Professores podem criar lessons com exercise embutido.
-4. Lessons publicadas entram no feed público consumido pelo frontend.
-5. Alunos enviam submissions para exercícios e acompanham o próprio histórico.
-
-## Estrutura do Repositório
-
-```text
-.
-├── backend/
-│   ├── accounts/
-│   ├── learning/
-│   ├── config/
-│   ├── manage.py
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── lib/
-│   │   └── test/
-│   └── package.json
-└── README.md
-```
-
-## Como Rodar
-
-### Backend
-
-Requisitos:
+Para trabalhar nas tres camadas localmente, o caminho mais pratico em Linux e:
 
 - Python 3.12+
-- PostgreSQL
+- PostgreSQL 16+
+- Redis 7+ opcional para fila/cache completos
+- Node.js 20+
+- npm 10+
+- Flutter stable
+- Git, curl e unzip
+
+## Quick Start
+
+### 1. Backend
+
+Veja detalhes completos em `backend/README.md`.
+
+Resumo:
 
 ```bash
 cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
@@ -107,80 +62,115 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-API disponível em `http://localhost:8000/api`.
+API local esperada em `http://127.0.0.1:8000/api`.
 
-Se quiser verificar rapidamente se a API subiu, use `GET /api/health`.
+### 2. Frontend
 
-### Frontend
+Veja detalhes completos em `frontend/README.md`.
 
-Requisitos:
-
-- Node.js 20+
-- npm
-
-Crie um arquivo `.env` dentro de `frontend/` com:
-
-```env
-VITE_API_URL=http://localhost:8000/api
-VITE_ANDROID_APP_URL=
-VITE_FLUTTER_ANDROID_URL=
-```
-
-Depois, rode:
+Resumo:
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-Aplicação web disponível em `http://localhost:8080` ou na porta informada pelo Vite.
+Frontend local esperado em `http://127.0.0.1:8080`.
 
-## Variáveis de Ambiente
+### 3. Mobile Flutter
+
+Veja detalhes completos em `mobile/README.md`.
+
+Resumo para Linux desktop:
+
+```bash
+cd mobile
+flutter pub get
+flutter run -d linux --dart-define=API_BASE_URL=http://127.0.0.1:8000/api
+```
+
+Importante:
+
+- o projeto ja possui `linux/`, `android/` e `ios/` versionados
+- voce nao precisa rodar `flutter create .`
+- para testar o fluxo completo de microfone, Android ou iOS continuam sendo os alvos mais confiaveis
+
+## Variaveis De Ambiente
 
 ### Backend
 
-| Variável | Descrição |
-| --- | --- |
-| `DEBUG` | Ativa o modo de desenvolvimento |
-| `SECRET_KEY` | Chave principal do Django |
-| `ALLOWED_HOSTS` | Hosts permitidos |
-| `CORS_ALLOWED_ORIGINS` | Origens liberadas para o frontend |
-| `CSRF_TRUSTED_ORIGINS` | Origens confiáveis para CSRF |
-| `DATABASE_NAME` | Nome do banco PostgreSQL |
-| `DATABASE_USER` | Usuário do banco |
-| `DATABASE_PASSWORD` | Senha do banco |
-| `DATABASE_HOST` | Host do banco |
-| `DATABASE_PORT` | Porta do banco |
-| `JWT_SECRET_KEY` | Chave para assinatura dos tokens |
-| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Duração do access token |
-| `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Duração do refresh token |
+Arquivo: `backend/.env`
+
+Base recomendada:
+
+```env
+DEBUG=True
+SECRET_KEY=change-me
+PUBLIC_API_HOST=127.0.0.1
+PUBLIC_API_ORIGIN=http://127.0.0.1:8000
+ALLOWED_HOSTS=127.0.0.1,localhost,testserver
+CORS_ALLOW_ALL_ORIGINS=True
+CORS_ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+DATABASE_NAME=vibe_studying
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+JWT_SECRET_KEY=change-me-too
+ENABLE_PUBLIC_TEACHER_SIGNUP=True
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+PUBLIC_WEB_URL=http://localhost:8080
+RUNTIME_ENVIRONMENT=development
+REDIS_URL=
+CACHE_URL=
+CELERY_BROKER_URL=memory://
+CELERY_RESULT_BACKEND=cache+memory://
+```
 
 ### Frontend
 
-| Variável | Descrição |
-| --- | --- |
-| `VITE_API_URL` | URL base da API Django Ninja |
-| `VITE_ANDROID_APP_URL` | Link do APK Android |
-| `VITE_FLUTTER_ANDROID_URL` | Link da build Flutter Android |
+Arquivo: `frontend/.env`
 
-## Endpoints Principais
+Base recomendada:
 
-| Método | Rota | Função |
-| --- | --- | --- |
-| `GET` | `/api/health` | Health check da API |
-| `POST` | `/api/auth/register` | Cadastro de aluno |
-| `POST` | `/api/auth/register/teacher` | Cadastro de professor |
-| `POST` | `/api/auth/login` | Login |
-| `POST` | `/api/auth/refresh` | Renovação de token |
-| `GET` | `/api/auth/me` | Perfil autenticado |
-| `GET` | `/api/feed` | Feed público de lessons |
-| `GET` | `/api/lessons/{slug}` | Detalhe de uma lesson |
-| `GET` | `/api/teacher/lessons` | Lista de lessons do professor |
-| `POST` | `/api/teacher/lessons` | Cria uma lesson com exercise |
-| `PUT` | `/api/teacher/lessons/{lesson_id}` | Atualiza a lesson |
-| `POST` | `/api/submissions` | Envia a tentativa do aluno |
-| `GET` | `/api/submissions/me` | Lista o histórico do aluno |
+```env
+VITE_API_URL=http://127.0.0.1:8000/api
+VITE_ANDROID_APP_URL=
+VITE_FLUTTER_ANDROID_URL=
+```
+
+### Mobile
+
+O app Flutter nao usa `.env` no repositorio atual.
+
+Voce pode configurar a URL do backend de duas formas:
+
+- por `--dart-define=API_BASE_URL=...`
+- pelo botao de configuracao de backend dentro do app
+
+Exemplo:
+
+```bash
+flutter run -d linux --dart-define=API_BASE_URL=http://127.0.0.1:8000/api
+```
+
+## Docker Compose
+
+Se quiser subir uma stack local mais completa com Postgres, Redis, backend, worker, beat e frontend:
+
+```bash
+docker compose up --build
+```
+
+Servicos esperados:
+
+- frontend em `http://127.0.0.1:8080`
+- backend em `http://127.0.0.1:8000/api`
+- PostgreSQL em `127.0.0.1:5432`
+- Redis em `127.0.0.1:6379`
 
 ## Testes
 
@@ -189,6 +179,7 @@ Aplicação web disponível em `http://localhost:8080` ou na porta informada pel
 ```bash
 cd backend
 source .venv/bin/activate
+python manage.py check
 python manage.py test
 ```
 
@@ -198,16 +189,19 @@ python manage.py test
 cd frontend
 npm install
 npm run test
+npm run build
 ```
 
-## Roadmap
+### Mobile
 
-- avaliação automatizada de pronúncia com pipeline real de IA
-- roteamento completo do portal autenticado no frontend
-- app Flutter offline-first integrado ao backend
-- processamento assíncrono para correções e distribuição de conteúdo
-- observabilidade, deploy e CI/CD
+```bash
+cd mobile
+flutter test
+```
 
-## Nota
+## Observacoes Importantes
 
-Este README descreve o estado atual do código. A identidade visual da landing page comunica uma visão de produto maior do que o MVP implementado hoje, e isso foi mantido intencionalmente para apresentar o potencial da plataforma sem mascarar o escopo real já entregue.
+- a experiencia principal de estudo esta no app mobile
+- a web hoje nao implementa feed de estudo completo; ela cobre aquisicao, auth e distribuicao
+- o backend ja tem base de operacao, mas o processamento confiavel de score das submissions ainda e um gap aberto
+- para setup detalhado por camada, use os READMEs internos de `backend/`, `frontend/` e `mobile/`

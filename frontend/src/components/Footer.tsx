@@ -16,7 +16,7 @@ const Footer = () => {
         <div className="font-mono-vibe text-xs space-y-2">
           <div className="text-secondary mb-2">// PRODUTO</div>
           <a href="#feed" className="block text-muted-foreground hover:text-primary">Feed</a>
-          <a href="#stack" className="block text-muted-foreground hover:text-primary">Stack</a>
+          <a href="#manifesto" className="block text-muted-foreground hover:text-primary">Manifesto</a>
           <a href="#faq" className="block text-muted-foreground hover:text-primary">FAQ</a>
         </div>
         <div className="font-mono-vibe text-xs space-y-2">

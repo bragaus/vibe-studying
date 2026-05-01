@@ -1,6 +1,9 @@
-from django.test import TestCase
+from unittest.mock import patch
 
-from accounts.models import StudentProfile, User
+from django.test import TestCase, override_settings
+
+from accounts.models import StudentProfile, User, WaitlistSignup
+from operations.models import EmailDelivery
 
 
 class AuthApiTests(TestCase):
@@ -19,6 +22,7 @@ class AuthApiTests(TestCase):
         self.assertEqual(register_response.status_code, 201)
         register_data = register_response.json()
         self.assertEqual(register_data["user"]["role"], User.Role.STUDENT)
+        self.assertEqual(EmailDelivery.objects.filter(template_key=EmailDelivery.TemplateKey.STUDENT_WELCOME).count(), 1)
 
         me_response = self.client.get(
             "/api/auth/me",
@@ -58,6 +62,22 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.json()["user"]["role"], User.Role.TEACHER)
         self.assertIn("access_token", response.json())
         self.assertTrue(User.objects.filter(email="teacher@example.com", role=User.Role.TEACHER).exists())
+
+    @override_settings(ENABLE_PUBLIC_TEACHER_SIGNUP=False)
+    def test_teacher_signup_can_be_disabled_by_environment(self):
+        response = self.client.post(
+            "/api/auth/register/teacher",
+            data={
+                "email": "blocked-teacher@example.com",
+                "password": "StrongPass123!",
+                "first_name": "Tea",
+                "last_name": "Cher",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(User.objects.filter(email="blocked-teacher@example.com").exists())
 
     def test_student_can_fetch_and_complete_profile_onboarding(self):
         register_response = self.client.post(
@@ -101,3 +121,51 @@ class AuthApiTests(TestCase):
         profile = StudentProfile.objects.get(user__email="profile@example.com")
         self.assertTrue(profile.onboarding_completed)
         self.assertEqual(profile.favorite_artists, ["Linkin Park"])
+
+    def test_public_waitlist_endpoint_creates_and_deduplicates_signup(self):
+        first_response = self.client.post(
+            "/api/waitlist",
+            data={"email": "Lead@example.com", "source": "landing"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertFalse(first_response.json()["already_registered"])
+
+        second_response = self.client.post(
+            "/api/waitlist",
+            data={"email": "lead@example.com", "source": "hero_cta"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(second_response.status_code, 200)
+        self.assertTrue(second_response.json()["already_registered"])
+        self.assertEqual(WaitlistSignup.objects.count(), 1)
+        self.assertEqual(WaitlistSignup.objects.get().source, "hero_cta")
+        self.assertEqual(EmailDelivery.objects.filter(template_key=EmailDelivery.TemplateKey.WAITLIST_WELCOME).count(), 1)
+
+    def test_waitlist_rejects_invalid_email(self):
+        response = self.client.post(
+            "/api/waitlist",
+            data={"email": "not-an-email"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    @patch("operations.emailing._enqueue_email_delivery_after_commit", side_effect=RuntimeError("broker offline"))
+    def test_student_register_does_not_fail_when_email_broker_is_unavailable(self, _enqueue_email_delivery_after_commit):
+        response = self.client.post(
+            "/api/auth/register",
+            data={
+                "email": "broker-offline@example.com",
+                "password": "StrongPass123!",
+                "first_name": "Bro",
+                "last_name": "Ker",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(User.objects.filter(email="broker-offline@example.com").exists())
+        self.assertEqual(EmailDelivery.objects.filter(recipient_email="broker-offline@example.com").count(), 1)

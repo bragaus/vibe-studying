@@ -4,6 +4,7 @@ No Django Ninja, cada router agrupa endpoints relacionados.
 Isso deixa o codigo mais facil de navegar e apresentar.
 """
 
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -13,12 +14,14 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from accounts.jwt import JWTError, create_token_pair, decode_jwt, jwt_auth
-from accounts.models import StudentProfile
+from accounts.models import StudentProfile, WaitlistSignup
 from accounts.permissions import require_role
+from operations.emailing import queue_student_welcome_email, queue_waitlist_welcome_email
 
 
 router = Router()
 profile_router = Router()
+marketing_router = Router()
 User = get_user_model()
 
 
@@ -79,6 +82,17 @@ class ProfileUpdateInput(Schema):
     favorite_anime: list[str] | None = None
     favorite_artists: list[str] | None = None
     favorite_genres: list[str] | None = None
+
+
+class WaitlistInput(Schema):
+    email: str
+    source: str = "landing_page"
+
+
+class WaitlistResponseSchema(Schema):
+    email: str
+    source: str
+    already_registered: bool
 
 
 def serialize_user(user) -> UserSchema:
@@ -180,6 +194,14 @@ def validate_identity_payload(email: str, password: str) -> None:
         raise HttpError(400, exc.messages[0]) from exc
 
 
+def validate_email_payload(email: str) -> str:
+    try:
+        validate_email(email)
+    except ValidationError as exc:
+        raise HttpError(400, exc.messages[0]) from exc
+    return email.strip().lower()
+
+
 def create_account(payload: RegisterInput, role: str):
     with transaction.atomic():
         # atomic garante que nada fique salvo pela metade se algo falhar.
@@ -204,6 +226,7 @@ def register_student(request, payload: RegisterInput):
         raise HttpError(409, "An account with this e-mail already exists.")
 
     user = create_account(payload, User.Role.STUDENT)
+    queue_student_welcome_email(user)
 
     return 201, build_auth_response(user)
 
@@ -211,6 +234,9 @@ def register_student(request, payload: RegisterInput):
 @router.post("/register/teacher", response={201: AuthResponseSchema})
 def register_teacher(request, payload: RegisterInput):
     # Professores agora entram pelo app com um fluxo proprio, sem Telegram.
+    if not settings.ENABLE_PUBLIC_TEACHER_SIGNUP:
+        raise HttpError(403, "Public teacher signup is disabled in this environment.")
+
     validate_identity_payload(payload.email, payload.password)
 
     if User.objects.filter(email__iexact=payload.email).exists():
@@ -273,3 +299,26 @@ def complete_onboarding(request, payload: ProfileUpdateInput):
     profile = get_or_create_student_profile(request.auth)
     update_student_profile(profile, payload, complete_onboarding=True)
     return build_profile_response(request.auth)
+
+
+@marketing_router.post("/waitlist", response={200: WaitlistResponseSchema, 201: WaitlistResponseSchema})
+def join_waitlist(request, payload: WaitlistInput):
+    normalized_email = validate_email_payload(payload.email)
+    source = payload.source.strip() or "landing_page"
+
+    signup, created = WaitlistSignup.objects.get_or_create(
+        email=normalized_email,
+        defaults={"source": source},
+    )
+    if not created and signup.source != source:
+        signup.source = source
+        signup.save(update_fields=["source"])
+    elif created:
+        queue_waitlist_welcome_email(signup)
+
+    response = WaitlistResponseSchema(
+        email=signup.email,
+        source=signup.source,
+        already_registered=not created,
+    )
+    return (201 if created else 200), response

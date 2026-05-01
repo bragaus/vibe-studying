@@ -1,0 +1,16 @@
+{
+  "name": "Vibe Studying",
+  "short_name": "Vibe",
+  "description": "Microlearning com cultura pop, backend proprio e app mobile do Vibe Studying.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0414",
+  "theme_color": "#0a0414",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

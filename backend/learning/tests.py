@@ -86,6 +86,7 @@ class LearningApiTests(TestCase):
             "/api/submissions",
             data={
                 "exercise_id": exercise.id,
+                "client_submission_id": "offline-sync-001",
                 "transcript_en": "We were on a break",
                 "transcript_pt": "Nos estavamos dando um tempo",
                 "line_results": [
@@ -106,8 +107,11 @@ class LearningApiTests(TestCase):
 
         self.assertEqual(create_submission_response.status_code, 201)
         self.assertEqual(create_submission_response.json()["status"], Submission.Status.PENDING)
+        self.assertEqual(create_submission_response.json()["client_submission_id"], "offline-sync-001")
         self.assertEqual(len(create_submission_response.json()["line_results"]), 1)
-        self.assertEqual(create_submission_response.json()["line_results"][0]["wrong_words"], ["break"])
+        self.assertEqual(create_submission_response.json()["line_results"][0]["wrong_words"], [])
+        self.assertEqual(create_submission_response.json()["line_results"][0]["status"], Submission.Status.PENDING)
+        self.assertIsNone(create_submission_response.json()["line_results"][0]["accuracy_score"])
 
         list_response = self.client.get(
             "/api/submissions/me",
@@ -116,6 +120,21 @@ class LearningApiTests(TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(len(list_response.json()), 1)
         self.assertEqual(list_response.json()[0]["lesson_slug"], lesson.slug)
+
+        duplicate_response = self.client.post(
+            "/api/submissions",
+            data={
+                "exercise_id": exercise.id,
+                "client_submission_id": "offline-sync-001",
+                "transcript_en": "We were on a break again",
+            },
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.student_token}",
+        )
+
+        self.assertEqual(duplicate_response.status_code, 200)
+        self.assertEqual(duplicate_response.json()["id"], create_submission_response.json()["id"])
+        self.assertEqual(Submission.objects.count(), 1)
 
     def test_personalized_feed_prioritizes_student_preferences(self):
         StudentProfile.objects.create(

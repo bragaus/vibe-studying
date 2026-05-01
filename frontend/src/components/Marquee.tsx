@@ -1,24 +1,21 @@
-const logos = [
-  "ANIME.CORE",
-  "LYRIC//SYNC",
-  "WHISPER.AI",
-  "TEMPORAL.IO",
-  "DJANGO++",
-  "FLUTTER.OS",
-  "NEON.FEED",
-  "WIRED.EDU",
+const languages = [
+  { label: "Inglês", flag: "🇺🇸" },
+  { label: "Japonês", flag: "🇯🇵" },
+  { label: "Chinês", flag: "🇨🇳" },
+  { label: "Francês", flag: "🇫🇷" },
 ];
 
 const Marquee = () => {
   return (
     <section
-      aria-label="Tecnologias e parceiros"
-      className="border-y border-primary/20 py-5 overflow-hidden bg-card/40"
+      aria-label="Idiomas que o Vibe Studying ensina"
+      className="overflow-hidden border-y border-primary/20 bg-card/40 py-4 sm:py-5"
     >
-      <div className="marquee font-display text-2xl text-muted-foreground">
-        {[...logos, ...logos].map((l, i) => (
+      <div className="marquee font-display text-xl text-muted-foreground sm:text-2xl">
+        {[...languages, ...languages].map((language, i) => (
           <span key={i} className="flex items-center gap-12 whitespace-nowrap">
-            {l}
+            <span>{language.label}</span>
+            <span>{language.flag}</span>
             <span className="text-primary">✦</span>
           </span>
         ))}

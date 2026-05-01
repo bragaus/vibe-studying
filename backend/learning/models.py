@@ -145,6 +145,7 @@ class Submission(TimeStampedModel):
         related_name="submissions",
     )
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name="submissions")
+    client_submission_id = models.CharField(max_length=64, null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     transcript_en = models.TextField(blank=True)
     transcript_pt = models.TextField(blank=True)
@@ -156,6 +157,13 @@ class Submission(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "client_submission_id"],
+                condition=models.Q(client_submission_id__isnull=False),
+                name="unique_student_client_submission_id",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.student.email} - {self.exercise.lesson.title}"

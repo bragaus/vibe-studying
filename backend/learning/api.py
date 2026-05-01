@@ -7,7 +7,10 @@ Separacao atual:
 """
 
 from datetime import datetime
+import logging
 
+from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -23,6 +26,9 @@ from learning.models import Exercise, ExerciseLine, Lesson, Submission, Submissi
 public_router = Router()
 teacher_router = Router()
 submission_router = Router()
+
+CONTENT_CACHE_VERSION_KEY = "learning:content-cache-version"
+logger = logging.getLogger(__name__)
 
 
 class ExerciseLineSchema(Schema):
@@ -127,6 +133,7 @@ class SubmissionLineInput(Schema):
 
 class SubmissionCreateInput(Schema):
     exercise_id: int
+    client_submission_id: str | None = None
     transcript_en: str = ""
     transcript_pt: str = ""
     line_results: list[SubmissionLineInput] | None = None
@@ -144,6 +151,7 @@ class SubmissionLineSchema(Schema):
 
 class SubmissionSchema(Schema):
     id: int
+    client_submission_id: str | None
     status: str
     transcript_en: str
     transcript_pt: str
@@ -160,6 +168,59 @@ class SubmissionSchema(Schema):
 
 def normalize_keyword(value: str) -> str:
     return " ".join(value.lower().strip().split())
+
+
+def get_content_cache_version() -> int:
+    try:
+        cache_version = cache.get(CONTENT_CACHE_VERSION_KEY)
+    except Exception as exc:
+        logger.warning("content cache read failed", extra={"error": str(exc)})
+        return 1
+
+    if cache_version is None:
+        try:
+            cache.set(CONTENT_CACHE_VERSION_KEY, 1, timeout=None)
+        except Exception as exc:
+            logger.warning("content cache seed failed", extra={"error": str(exc)})
+        return 1
+    return int(cache_version)
+
+
+def bump_content_cache_version() -> int:
+    current_version = get_content_cache_version()
+    next_version = current_version + 1
+    try:
+        cache.set(CONTENT_CACHE_VERSION_KEY, next_version, timeout=None)
+    except Exception as exc:
+        logger.warning("content cache version bump failed", extra={"error": str(exc)})
+    return next_version
+
+
+def safe_cache_get(cache_key: str):
+    try:
+        return cache.get(cache_key)
+    except Exception as exc:
+        logger.warning("cache get failed", extra={"cache_key": cache_key, "error": str(exc)})
+        return None
+
+
+def safe_cache_set(cache_key: str, value, timeout: int) -> None:
+    try:
+        cache.set(cache_key, value, timeout=timeout)
+    except Exception as exc:
+        logger.warning("cache set failed", extra={"cache_key": cache_key, "error": str(exc)})
+
+
+def build_public_feed_cache_key(cursor: int | None, limit: int) -> str:
+    return f"learning:feed:v{get_content_cache_version()}:cursor:{cursor or 'start'}:limit:{limit}"
+
+
+def build_lesson_detail_cache_key(slug: str) -> str:
+    return f"learning:lesson:v{get_content_cache_version()}:slug:{slug}"
+
+
+def invalidate_public_learning_cache() -> None:
+    bump_content_cache_version()
 
 
 def normalize_keyword_list(values: list[str] | None) -> list[str]:
@@ -277,6 +338,7 @@ def serialize_submission_line(submission_line: SubmissionLine) -> SubmissionLine
 def serialize_submission(submission: Submission) -> SubmissionSchema:
     return SubmissionSchema(
         id=submission.id,
+        client_submission_id=submission.client_submission_id,
         status=submission.status,
         transcript_en=submission.transcript_en,
         transcript_pt=submission.transcript_pt,
@@ -404,6 +466,11 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     if limit < 1 or limit > 50:
         raise HttpError(400, "Limit must be between 1 and 50.")
 
+    cache_key = build_public_feed_cache_key(cursor, limit)
+    cached_response = safe_cache_get(cache_key)
+    if cached_response is not None:
+        return FeedResponseSchema.model_validate(cached_response)
+
     queryset = Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher")
     if cursor is not None:
         queryset = queryset.filter(id__lt=cursor)
@@ -413,10 +480,16 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     lessons = lessons[:limit]
     next_cursor = lessons[-1].id if has_more and lessons else None
 
-    return FeedResponseSchema(
+    response = FeedResponseSchema(
         items=[serialize_lesson_feed_item(lesson) for lesson in lessons],
         next_cursor=next_cursor,
     )
+    safe_cache_set(
+        cache_key,
+        response.model_dump(mode="json"),
+        timeout=settings.PUBLIC_FEED_CACHE_TIMEOUT_SECONDS,
+    )
+    return response
 
 
 @public_router.get("/feed/personalized", auth=jwt_auth, response=FeedResponseSchema)
@@ -449,11 +522,22 @@ def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
 
 @public_router.get("/lessons/{slug}", response=LessonDetailSchema)
 def get_lesson_detail(request, slug: str):
+    cache_key = build_lesson_detail_cache_key(slug)
+    cached_response = safe_cache_get(cache_key)
+    if cached_response is not None:
+        return LessonDetailSchema.model_validate(cached_response)
+
     lesson = get_object_or_404(
         Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher", "exercise").prefetch_related("exercise__lines"),
         slug=slug,
     )
-    return serialize_lesson_detail(lesson)
+    response = serialize_lesson_detail(lesson)
+    safe_cache_set(
+        cache_key,
+        response.model_dump(mode="json"),
+        timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS,
+    )
+    return response
 
 
 @teacher_router.get("/lessons", auth=jwt_auth, response=list[TeacherLessonSchema])
@@ -498,6 +582,8 @@ def create_teacher_lesson(request, payload: TeacherLessonInput):
             max_score=payload.max_score,
         )
         sync_exercise_lines(exercise, payload.line_items)
+
+        transaction.on_commit(invalidate_public_learning_cache)
 
     lesson.refresh_from_db()
     return 201, serialize_teacher_lesson(lesson)
@@ -550,13 +636,28 @@ def update_teacher_lesson(request, lesson_id: int, payload: TeacherLessonUpdateI
         if "line_items" in changes:
             sync_exercise_lines(exercise, line_items)
 
+        transaction.on_commit(invalidate_public_learning_cache)
+
     lesson.refresh_from_db()
     return serialize_teacher_lesson(lesson)
 
 
-@submission_router.post("/submissions", auth=jwt_auth, response={201: SubmissionSchema})
+@submission_router.post("/submissions", auth=jwt_auth, response={200: SubmissionSchema, 201: SubmissionSchema})
 def create_submission(request, payload: SubmissionCreateInput):
     require_role(request.auth, request.auth.Role.STUDENT)
+
+    if payload.client_submission_id:
+        existing_submission = (
+            Submission.objects.filter(
+                student=request.auth,
+                client_submission_id=payload.client_submission_id,
+            )
+            .select_related("exercise__lesson")
+            .prefetch_related("line_results")
+            .first()
+        )
+        if existing_submission is not None:
+            return 200, serialize_submission(existing_submission)
 
     exercise = get_object_or_404(
         Exercise.objects.select_related("lesson"),
@@ -568,6 +669,7 @@ def create_submission(request, payload: SubmissionCreateInput):
         submission = Submission.objects.create(
             student=request.auth,
             exercise=exercise,
+            client_submission_id=payload.client_submission_id,
             transcript_en=payload.transcript_en,
             transcript_pt=payload.transcript_pt,
             status=Submission.Status.PENDING,
@@ -582,11 +684,13 @@ def create_submission(request, payload: SubmissionCreateInput):
                 submission=submission,
                 exercise_line=exercise_line,
                 transcript_en=line_result.transcript_en,
-                accuracy_score=line_result.accuracy_score,
-                pronunciation_score=line_result.pronunciation_score,
-                wrong_words=normalize_keyword_list(line_result.wrong_words),
-                feedback=line_result.feedback or {},
-                status=line_result.status,
+                # O cliente pode enviar heuristicas locais, mas o backend so aceita
+                # transcript e vinculacao de linha ate que um processor confiavel rode.
+                accuracy_score=None,
+                pronunciation_score=None,
+                wrong_words=[],
+                feedback={},
+                status=SubmissionLine.Status.PENDING,
             )
 
     submission.refresh_from_db()

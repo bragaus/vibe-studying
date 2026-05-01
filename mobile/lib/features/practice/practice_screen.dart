@@ -238,16 +238,23 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     }
 
     try {
-      await ref.read(feedRepositoryProvider).submitPractice(
-            accessToken: session.accessToken,
-            exerciseId: lesson.exercise.id,
-            lineResults: _results,
-          );
+      final dispatchResult =
+          await ref.read(feedRepositoryProvider).submitPractice(
+                accessToken: session.accessToken,
+                exerciseId: lesson.exercise.id,
+                lineResults: _results,
+              );
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sessao enviada ao backend com sucesso.')),
+        SnackBar(
+          content: Text(
+            dispatchResult.queuedOffline
+                ? 'Sem conexao: tentativa salva offline e marcada para sincronizacao.'
+                : 'Sessao enviada ao backend com sucesso.',
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) {

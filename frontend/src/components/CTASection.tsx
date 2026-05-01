@@ -2,28 +2,60 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
+import { getApiBaseUrl } from "@/lib/auth";
+
+const API_BASE_URL = getApiBaseUrl();
+
 const CTASection = () => {
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@")) {
       toast.error("ERR :: email inválido");
       return;
     }
-    toast.success("BEM-VINDO À VIBE", { description: `${email} entrou na waitlist.` });
-    setEmail("");
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "landing_cta" }),
+      });
+      const payload = (await response.json()) as { detail?: string; already_registered?: boolean };
+
+      if (!response.ok) {
+        throw new Error(payload.detail || "Nao foi possivel entrar na waitlist.");
+      }
+
+      toast.success(
+        payload.already_registered ? "JA ESTAVA NA WAITLIST" : "BEM-VINDO A VIBE",
+        {
+          description: payload.already_registered
+            ? `${email} ja estava registrado e foi mantido na fila.`
+            : `${email} entrou na waitlist com sucesso.`,
+        },
+      );
+      setEmail("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao registrar e-mail.";
+      toast.error(`ERR :: ${message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section className="container py-28">
+    <section className="container py-20 sm:py-28">
       <div
-        className="relative overflow-hidden border border-primary/40 p-10 sm:p-16 text-center scanlines"
+        className="relative overflow-hidden border border-primary/40 p-6 text-center scanlines sm:p-10 lg:p-16"
         style={{ background: "var(--gradient-glow)" }}
       >
-        <div className="font-mono-vibe text-xs text-secondary mb-4">// 06_JOIN_BETA</div>
-        <h2 className="font-display text-4xl sm:text-6xl mb-6">
-          Pronto pra <span className="text-gradient-vibe">entrar na vibe?</span>
+        <div className="font-mono-vibe text-xs text-secondary mb-4">// experimente sem pagar nada</div>
+        <h2 className="mb-6 font-display text-3xl sm:text-6xl">
+          Pronto para <span className="text-gradient-vibe">entrar na vibe?</span>
         </h2>
         <p className="text-muted-foreground max-w-xl mx-auto mb-10">
           Vagas limitadas no beta fechado. Garanta a sua antes que vire mainstream.
@@ -44,9 +76,10 @@ const CTASection = () => {
           />
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono-vibe text-sm px-6 py-4 hover:scale-[1.02] transition-transform glow-pink"
+            disabled={isSubmitting}
+            className="inline-flex w-full items-center justify-center gap-2 bg-primary px-6 py-4 font-mono-vibe text-sm text-primary-foreground transition-transform hover:scale-[1.02] glow-pink sm:w-auto"
           >
-            ENTRAR <ArrowRight className="h-4 w-4" />
+            {isSubmitting ? "ENVIANDO" : "ENTRAR NO BETA ->"}
           </button>
         </form>
       </div>
