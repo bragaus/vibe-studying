@@ -108,7 +108,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (!mounted) {
         return;
       }
-      context.go('/feed');
+      context.go('/feed/bootstrap');
     } catch (error) {
       if (!mounted) {
         return;

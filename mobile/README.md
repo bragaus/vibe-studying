@@ -87,6 +87,7 @@ Quando o app abrir, voce podera:
 - logar
 - cadastrar aluno
 - concluir onboarding
+- aguardar o bootstrap do feed personalizado apos o formulario
 - consumir o feed personalizado
 - abrir lessons
 
@@ -143,4 +144,5 @@ flutter test
 - se o backend estiver em outra maquina, use o IP dela no `API_BASE_URL`
 - o app tambem permite trocar a URL do backend por UI
 - o feed sincroniza submissions pendentes antes de recarregar conteudo
+- depois do onboarding, o app entra em uma tela de bootstrap enquanto o backend busca fontes na web e gera lessons praticaveis via IA
 - o mobile persiste sessao em secure storage e cache em shared preferences

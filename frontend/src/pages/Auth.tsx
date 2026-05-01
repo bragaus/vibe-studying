@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Zap, ArrowRight, Mail, Lock, User as UserIcon } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Zap, ArrowRight, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { getApiBaseUrl, isAuthenticated, persistSession, type AuthResponsePayload } from "@/lib/auth";
@@ -33,11 +33,15 @@ const Auth = () => {
   const navigate = useNavigate();
   const [isLoginState, setIsLoginState] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [credentialError, setCredentialError] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+
+  const clearCredentialError = () => setCredentialError("");
 
   if (isAuthenticated()) {
     return <Navigate to="/" replace />;
@@ -45,6 +49,7 @@ const Auth = () => {
 
   const handleAuthenticationProcess = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearCredentialError();
     setIsLoading(true);
 
     const endpoint = isLoginState ? "/auth/login" : "/auth/register";
@@ -62,13 +67,20 @@ const Auth = () => {
       const data = (await response.json()) as AuthResponsePayload | { detail?: unknown };
 
       if (!response.ok) {
+        if (isLoginState && response.status === 401) {
+          setCredentialError("USUARIO OU SENHA INCORRETOS");
+          return;
+        }
+
         throw new Error(getErrorMessage(data, "Erro na autenticação do sistema."));
       }
 
       persistSession(data as AuthResponsePayload);
 
       toast.success(
-        isLoginState ? "Acesso autorizado. Console liberado." : "Cadastro concluído. Sessão iniciada.",
+        isLoginState
+          ? "Acesso autorizado. Console liberado."
+          : "Cadastro concluído. Sessão iniciada; e-mail de boas-vindas em instantes.",
       );
       navigate("/", { replace: true });
     } catch (error: unknown) {
@@ -119,7 +131,11 @@ const Auth = () => {
                   type="text"
                   placeholder="Nome"
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => {
+                    clearCredentialError();
+                    setFirstName(e.target.value);
+                  }}
+                  autoComplete="given-name"
                   className="w-full bg-background/50 border border-primary/20 p-3 pl-10 text-xs text-foreground focus:border-primary focus:shadow-[0_0_10px_rgba(var(--primary),0.3)] transition-all outline-none"
                   required
                 />
@@ -130,7 +146,11 @@ const Auth = () => {
                   type="text"
                   placeholder="Sobrenome"
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => {
+                    clearCredentialError();
+                    setLastName(e.target.value);
+                  }}
+                  autoComplete="family-name"
                   className="w-full bg-background/50 border border-primary/20 p-3 pl-10 text-xs text-foreground focus:border-primary focus:shadow-[0_0_10px_rgba(var(--primary),0.3)] transition-all outline-none"
                   required
                 />
@@ -144,7 +164,11 @@ const Auth = () => {
               type="email"
               placeholder="user@protocol.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                clearCredentialError();
+                setEmail(e.target.value);
+              }}
+              autoComplete="email"
               className="w-full bg-background/50 border border-primary/20 p-3 pl-10 text-xs text-foreground focus:border-primary focus:shadow-[0_0_10px_rgba(var(--primary),0.3)] transition-all outline-none"
               required
             />
@@ -153,14 +177,49 @@ const Auth = () => {
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <input
-              type="password"
+              type={isPasswordVisible ? "text" : "password"}
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-background/50 border border-primary/20 p-3 pl-10 text-xs text-foreground focus:border-primary focus:shadow-[0_0_10px_rgba(var(--primary),0.3)] transition-all outline-none"
+              onChange={(e) => {
+                clearCredentialError();
+                setPassword(e.target.value);
+              }}
+              autoComplete={isLoginState ? "current-password" : "new-password"}
+              className="w-full bg-background/50 border border-primary/20 p-3 pl-10 pr-12 text-xs text-foreground focus:border-primary focus:shadow-[0_0_10px_rgba(var(--primary),0.3)] transition-all outline-none"
               required
             />
+            <button
+              type="button"
+              onClick={() => setIsPasswordVisible((current) => !current)}
+              aria-label={isPasswordVisible ? "Ocultar senha" : "Mostrar senha"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary"
+            >
+              {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
+
+          <AnimatePresence>
+            {credentialError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0, x: [0, -4, 4, -2, 2, 0] }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{
+                  opacity: { duration: 0.18 },
+                  y: { duration: 0.18 },
+                  x: { duration: 0.45, repeat: Infinity, repeatDelay: 1.2 },
+                }}
+                className="rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-center"
+              >
+                <p
+                  className="glitch glitch-danger font-display text-sm tracking-[0.18em] text-red-400"
+                  data-text={credentialError}
+                >
+                  {credentialError}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <button
             type="submit"
@@ -175,7 +234,10 @@ const Auth = () => {
         <div className="mt-6 text-center font-mono-vibe text-[10px]">
           <button
             type="button"
-            onClick={() => setIsLoginState(!isLoginState)}
+            onClick={() => {
+              clearCredentialError();
+              setIsLoginState(!isLoginState);
+            }}
             className="text-secondary hover:text-primary transition-colors"
           >
             {isLoginState

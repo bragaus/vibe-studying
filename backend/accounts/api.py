@@ -16,6 +16,7 @@ from ninja.errors import HttpError
 from accounts.jwt import JWTError, create_token_pair, decode_jwt, jwt_auth
 from accounts.models import StudentProfile, WaitlistSignup
 from accounts.permissions import require_role
+from learning.tasks import enqueue_personalized_feed_bootstrap
 from operations.emailing import queue_student_welcome_email, queue_waitlist_welcome_email
 
 
@@ -298,6 +299,7 @@ def complete_onboarding(request, payload: ProfileUpdateInput):
     require_role(request.auth, request.auth.Role.STUDENT)
     profile = get_or_create_student_profile(request.auth)
     update_student_profile(profile, payload, complete_onboarding=True)
+    transaction.on_commit(lambda: enqueue_personalized_feed_bootstrap(request.auth.id, force=True))
     return build_profile_response(request.auth)
 
 

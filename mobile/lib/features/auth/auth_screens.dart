@@ -7,6 +7,28 @@ import 'package:vibe_studying_mobile/core/repositories.dart';
 import 'package:vibe_studying_mobile/core/state.dart';
 import 'package:vibe_studying_mobile/shared/hud.dart';
 
+Future<String> _resolvePostAuthRoute(
+  WidgetRef ref,
+  AuthSession session,
+  ProfileBundle bundle,
+) async {
+  if (!bundle.profile.onboardingCompleted) {
+    return '/onboarding';
+  }
+
+  try {
+    final status = await ref
+        .read(feedRepositoryProvider)
+        .getFeedBootstrapStatus(session.accessToken);
+    if (status.isDone || status.readyItems > 0) {
+      return '/feed';
+    }
+    return '/feed/bootstrap';
+  } catch (_) {
+    return '/feed';
+  }
+}
+
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -39,14 +61,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _routeAfterAuth(AuthSession session) async {
     try {
-      final profile = await ref
+      final bundle = await ref
           .read(profileControllerProvider.notifier)
           .load(session.accessToken);
       if (!mounted) {
         return;
       }
 
-      context.go(profile.profile.onboardingCompleted ? '/feed' : '/onboarding');
+      context.go(await _resolvePostAuthRoute(ref, session, bundle));
     } catch (_) {
       if (!mounted) {
         return;
@@ -225,13 +247,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _routeAfterAuth(AuthSession session) async {
     try {
-      final profile = await ref
+      final bundle = await ref
           .read(profileControllerProvider.notifier)
           .load(session.accessToken);
       if (!mounted) {
         return;
       }
-      context.go(profile.profile.onboardingCompleted ? '/feed' : '/onboarding');
+      context.go(await _resolvePostAuthRoute(ref, session, bundle));
     } catch (error) {
       if (!mounted) {
         return;

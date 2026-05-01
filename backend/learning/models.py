@@ -43,11 +43,22 @@ class Lesson(TimeStampedModel):
         DRAFT = "draft", _("Draft")
         PUBLISHED = "published", _("Published")
 
+    class Visibility(models.TextChoices):
+        PUBLIC = "public", _("Public")
+        PRIVATE = "private", _("Private")
+
     teacher = models.ForeignKey(
         # PROTECT evita apagar professor enquanto houver conteudo ligado a ele.
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="lessons",
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="personalized_lessons",
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
@@ -57,6 +68,13 @@ class Lesson(TimeStampedModel):
     difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.EASY)
     tags = models.JSONField(default=list, blank=True)
     media_url = models.URLField(max_length=500)
+    cover_image_url = models.URLField(max_length=500, blank=True)
+    source_url = models.URLField(max_length=500, blank=True)
+    source_title = models.CharField(max_length=255, blank=True)
+    source_domain = models.CharField(max_length=255, blank=True)
+    match_reason_hint = models.CharField(max_length=255, blank=True)
+    generated_by_ai = models.BooleanField(default=False)
+    visibility = models.CharField(max_length=20, choices=Visibility.choices, default=Visibility.PUBLIC)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     published_at = models.DateTimeField(null=True, blank=True)
 
@@ -197,3 +215,33 @@ class SubmissionLine(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"LineResult<{self.submission_id}:{self.exercise_line_id}>"
+
+
+class PersonalizedFeedJob(TimeStampedModel):
+    """Estado da geracao do feed individual do aluno."""
+
+    class Status(models.TextChoices):
+        IDLE = "idle", _("Idle")
+        PENDING = "pending", _("Pending")
+        RUNNING = "running", _("Running")
+        DONE = "done", _("Done")
+        FAILED = "failed", _("Failed")
+
+    student = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="personalized_feed_job",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.IDLE)
+    target_items = models.PositiveSmallIntegerField(default=8)
+    generated_items = models.PositiveSmallIntegerField(default=0)
+    profile_signature = models.CharField(max_length=64, blank=True)
+    last_error = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["student__email"]
+
+    def __str__(self) -> str:
+        return f"PersonalizedFeedJob<{self.student.email}:{self.status}>"

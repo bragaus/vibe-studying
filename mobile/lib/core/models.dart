@@ -150,7 +150,10 @@ class FeedItem {
     required this.difficulty,
     required this.tags,
     required this.mediaUrl,
+    required this.coverImageUrl,
+    required this.sourceUrl,
     required this.teacherName,
+    required this.isPersonalized,
     required this.matchReason,
   });
 
@@ -163,7 +166,10 @@ class FeedItem {
   final String difficulty;
   final List<String> tags;
   final String mediaUrl;
+  final String coverImageUrl;
+  final String sourceUrl;
   final String teacherName;
+  final bool isPersonalized;
   final String? matchReason;
 
   factory FeedItem.fromJson(Map<String, dynamic> json) {
@@ -177,7 +183,10 @@ class FeedItem {
       difficulty: (json['difficulty'] ?? 'easy') as String,
       tags: ((json['tags'] as List<dynamic>? ?? const [])).cast<String>(),
       mediaUrl: json['media_url'] as String,
+      coverImageUrl: (json['cover_image_url'] ?? '') as String,
+      sourceUrl: (json['source_url'] ?? '') as String,
       teacherName: json['teacher_name'] as String,
+      isPersonalized: (json['is_personalized'] ?? false) as bool,
       matchReason: json['match_reason'] as String?,
     );
   }
@@ -193,8 +202,67 @@ class FeedItem {
       'difficulty': difficulty,
       'tags': tags,
       'media_url': mediaUrl,
+      'cover_image_url': coverImageUrl,
+      'source_url': sourceUrl,
       'teacher_name': teacherName,
+      'is_personalized': isPersonalized,
       'match_reason': matchReason,
+    };
+  }
+}
+
+class FeedBootstrapStatus {
+  const FeedBootstrapStatus({
+    required this.status,
+    required this.readyItems,
+    required this.targetItems,
+    required this.generatedItems,
+    required this.startedAt,
+    required this.finishedAt,
+    required this.lastError,
+  });
+
+  final String status;
+  final int readyItems;
+  final int targetItems;
+  final int generatedItems;
+  final DateTime? startedAt;
+  final DateTime? finishedAt;
+  final String? lastError;
+
+  bool get isRunning => status == 'pending' || status == 'running';
+  bool get isDone => status == 'done';
+  bool get hasFailed => status == 'failed';
+
+  factory FeedBootstrapStatus.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(String key) {
+      final value = json[key];
+      if (value is! String || value.trim().isEmpty) {
+        return null;
+      }
+      return DateTime.tryParse(value);
+    }
+
+    return FeedBootstrapStatus(
+      status: (json['status'] ?? 'idle') as String,
+      readyItems: (json['ready_items'] ?? 0) as int,
+      targetItems: (json['target_items'] ?? 0) as int,
+      generatedItems: (json['generated_items'] ?? 0) as int,
+      startedAt: parseDate('started_at'),
+      finishedAt: parseDate('finished_at'),
+      lastError: json['last_error'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'ready_items': readyItems,
+      'target_items': targetItems,
+      'generated_items': generatedItems,
+      'started_at': startedAt?.toIso8601String(),
+      'finished_at': finishedAt?.toIso8601String(),
+      'last_error': lastError,
     };
   }
 }
@@ -321,6 +389,8 @@ class LessonDetail {
     required this.contentType,
     required this.difficulty,
     required this.tags,
+    required this.coverImageUrl,
+    required this.sourceUrl,
     required this.exercise,
   });
 
@@ -330,6 +400,8 @@ class LessonDetail {
   final String contentType;
   final String difficulty;
   final List<String> tags;
+  final String coverImageUrl;
+  final String sourceUrl;
   final ExerciseDetail exercise;
 
   factory LessonDetail.fromJson(Map<String, dynamic> json) {
@@ -340,6 +412,8 @@ class LessonDetail {
       contentType: json['content_type'] as String,
       difficulty: (json['difficulty'] ?? 'easy') as String,
       tags: ((json['tags'] as List<dynamic>? ?? const [])).cast<String>(),
+      coverImageUrl: (json['cover_image_url'] ?? '') as String,
+      sourceUrl: (json['source_url'] ?? '') as String,
       exercise:
           ExerciseDetail.fromJson(json['exercise'] as Map<String, dynamic>),
     );
@@ -353,6 +427,8 @@ class LessonDetail {
       'content_type': contentType,
       'difficulty': difficulty,
       'tags': tags,
+      'cover_image_url': coverImageUrl,
+      'source_url': sourceUrl,
       'exercise': exercise.toJson(),
     };
   }

@@ -140,6 +140,12 @@
     mix-blend-mode: screen;
     animation: glitch-y 2.7s infinite steps(1, end);
   }
+  .glitch-danger::before {
+    color: hsl(0 100% 70%);
+  }
+  .glitch-danger::after {
+    color: hsl(0 72% 45%);
+  }
 
   .marquee {
     display: flex;

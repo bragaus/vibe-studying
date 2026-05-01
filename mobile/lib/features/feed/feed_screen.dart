@@ -186,10 +186,34 @@ class _FeedCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (item.coverImageUrl.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.network(
+                  item.coverImageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppPalette.panelSoft,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported_outlined,
+                        color: AppPalette.muted),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
+              if (item.isPersonalized)
+                const HudTag(
+                  label: 'personalized',
+                  color: AppPalette.neonYellow,
+                ),
               HudTag(label: item.contentType, color: AppPalette.neonPink),
               HudTag(label: item.difficulty, color: AppPalette.neonCyan),
               if (item.matchReason != null)
@@ -200,6 +224,15 @@ class _FeedCard extends StatelessWidget {
           Text(item.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(item.description),
+          if (item.sourceUrl.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              item.sourceUrl,
+              style: const TextStyle(color: AppPalette.muted, fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           if (item.tags.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(

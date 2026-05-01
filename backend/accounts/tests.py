@@ -79,7 +79,8 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertFalse(User.objects.filter(email="blocked-teacher@example.com").exists())
 
-    def test_student_can_fetch_and_complete_profile_onboarding(self):
+    @patch("accounts.api.enqueue_personalized_feed_bootstrap")
+    def test_student_can_fetch_and_complete_profile_onboarding(self, enqueue_personalized_feed_bootstrap):
         register_response = self.client.post(
             "/api/auth/register",
             data={
@@ -99,20 +100,21 @@ class AuthApiTests(TestCase):
         self.assertEqual(profile_response.status_code, 200)
         self.assertFalse(profile_response.json()["profile"]["onboarding_completed"])
 
-        onboarding_response = self.client.post(
-            "/api/profile/onboarding",
-            data={
-                "english_level": StudentProfile.EnglishLevel.INTERMEDIATE,
-                "favorite_songs": ["Numb", "Numb", " Yellow "],
-                "favorite_movies": ["Interstellar"],
-                "favorite_series": ["Dark"],
-                "favorite_anime": ["Naruto"],
-                "favorite_artists": ["Linkin Park"],
-                "favorite_genres": ["rock", "Sci-Fi"],
-            },
-            content_type="application/json",
-            HTTP_AUTHORIZATION=f"Bearer {token}",
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            onboarding_response = self.client.post(
+                "/api/profile/onboarding",
+                data={
+                    "english_level": StudentProfile.EnglishLevel.INTERMEDIATE,
+                    "favorite_songs": ["Numb", "Numb", " Yellow "],
+                    "favorite_movies": ["Interstellar"],
+                    "favorite_series": ["Dark"],
+                    "favorite_anime": ["Naruto"],
+                    "favorite_artists": ["Linkin Park"],
+                    "favorite_genres": ["rock", "Sci-Fi"],
+                },
+                content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {token}",
+            )
 
         self.assertEqual(onboarding_response.status_code, 200)
         self.assertTrue(onboarding_response.json()["profile"]["onboarding_completed"])
@@ -121,6 +123,7 @@ class AuthApiTests(TestCase):
         profile = StudentProfile.objects.get(user__email="profile@example.com")
         self.assertTrue(profile.onboarding_completed)
         self.assertEqual(profile.favorite_artists, ["Linkin Park"])
+        enqueue_personalized_feed_bootstrap.assert_called_once_with(profile.user.id, force=True)
 
     def test_public_waitlist_endpoint_creates_and_deduplicates_signup(self):
         first_response = self.client.post(

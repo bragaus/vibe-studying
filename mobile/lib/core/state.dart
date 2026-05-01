@@ -284,7 +284,22 @@ final personalizedFeedProvider =
   return repository.getPersonalizedFeed(session.accessToken);
 });
 
+final feedBootstrapStatusProvider =
+    FutureProvider.autoDispose<FeedBootstrapStatus>((ref) async {
+  final session = ref.watch(sessionControllerProvider).session;
+  if (session == null) {
+    throw const ApiException('Sessão não encontrada.');
+  }
+  return ref
+      .watch(feedRepositoryProvider)
+      .getFeedBootstrapStatus(session.accessToken);
+});
+
 final lessonDetailProvider =
     FutureProvider.autoDispose.family<LessonDetail, String>((ref, slug) async {
-  return ref.watch(feedRepositoryProvider).getLessonDetail(slug);
+  final session = ref.watch(sessionControllerProvider).session;
+  return ref.watch(feedRepositoryProvider).getLessonDetail(
+        slug,
+        accessToken: session?.accessToken,
+      );
 });

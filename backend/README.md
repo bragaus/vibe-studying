@@ -74,6 +74,10 @@ DEFAULT_FROM_EMAIL=noreply@vibestudying.local
 SERVER_EMAIL=noreply@vibestudying.local
 PUBLIC_WEB_URL=http://localhost:8080
 RUNTIME_ENVIRONMENT=development
+AI_CURATOR_EMAIL=ai-curator@vibestudying.local
+SEARXNG_BASE_URL=http://127.0.0.1:8081
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=deepseek-r1:8b
 REDIS_URL=
 CACHE_URL=
 CELERY_BROKER_URL=memory://
@@ -95,6 +99,10 @@ CELERY_RESULT_BACKEND=cache+memory://
 | `CORS_ALLOWED_ORIGINS` | recomendado | origens permitidas do frontend |
 | `CSRF_TRUSTED_ORIGINS` | recomendado | origens confiaveis para CSRF |
 | `ENABLE_PUBLIC_TEACHER_SIGNUP` | recomendado | libera ou fecha signup publico de professor |
+| `AI_CURATOR_EMAIL` | recomendado | conta tecnica dona das lessons geradas por IA |
+| `SEARXNG_BASE_URL` | recomendado | endpoint HTTP do buscador SearXNG |
+| `OLLAMA_BASE_URL` | recomendado | endpoint HTTP do Ollama local |
+| `OLLAMA_MODEL` | recomendado | modelo carregado no Ollama |
 | `EMAIL_BACKEND` | recomendado | console local ou SMTP real |
 | `REDIS_URL` | opcional | broker/cache Redis |
 | `CACHE_URL` | opcional | cache Redis |
@@ -140,6 +148,11 @@ GET /api/health
 
 Somente faz sentido rodar estes processos se voce configurou Redis ou quiser validar Celery localmente.
 
+Para o bootstrap personalizado do feed, voce tambem precisa subir:
+
+- um servidor Ollama com um modelo compatível com JSON, como `deepseek-r1:8b`
+- um endpoint SearXNG acessivel pelo backend
+
 Worker:
 
 ```bash
@@ -176,6 +189,8 @@ python manage.py test
 - `POST /api/profile/onboarding`
 - `POST /api/waitlist`
 - `GET /api/feed`
+- `GET /api/feed/bootstrap-status`
+- `POST /api/feed/bootstrap`
 - `GET /api/feed/personalized`
 - `GET /api/lessons/{slug}`
 - `GET /api/teacher/lessons`

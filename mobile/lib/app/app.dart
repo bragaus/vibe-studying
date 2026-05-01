@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vibe_studying_mobile/app/theme.dart';
 import 'package:vibe_studying_mobile/features/auth/auth_screens.dart';
+import 'package:vibe_studying_mobile/features/feed/feed_bootstrap_screen.dart';
 import 'package:vibe_studying_mobile/features/feed/feed_screen.dart';
 import 'package:vibe_studying_mobile/features/onboarding/onboarding_screen.dart';
 import 'package:vibe_studying_mobile/features/practice/practice_screen.dart';
@@ -23,6 +24,10 @@ class VibeStudyingApp extends StatelessWidget {
         GoRoute(
             path: '/onboarding',
             builder: (context, state) => const OnboardingScreen()),
+        GoRoute(
+          path: '/feed/bootstrap',
+          builder: (context, state) => const FeedBootstrapScreen(),
+        ),
         GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
         GoRoute(
           path: '/practice/:slug',

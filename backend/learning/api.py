@@ -12,6 +12,7 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router, Schema
@@ -20,7 +21,8 @@ from ninja.errors import HttpError
 from accounts.jwt import jwt_auth
 from accounts.models import StudentProfile
 from accounts.permissions import require_role
-from learning.models import Exercise, ExerciseLine, Lesson, Submission, SubmissionLine
+from learning.models import Exercise, ExerciseLine, Lesson, PersonalizedFeedJob, Submission, SubmissionLine
+from learning.tasks import count_ready_personalized_lessons, enqueue_personalized_feed_bootstrap, get_or_create_personalized_feed_job
 
 
 public_router = Router()
@@ -61,8 +63,11 @@ class LessonFeedItemSchema(Schema):
     difficulty: str
     tags: list[str]
     media_url: str
+    cover_image_url: str = ""
+    source_url: str = ""
     teacher_name: str
     created_at: datetime
+    is_personalized: bool = False
     match_reason: str | None = None
 
 
@@ -75,6 +80,16 @@ class LessonDetailSchema(LessonFeedItemSchema):
 class FeedResponseSchema(Schema):
     items: list[LessonFeedItemSchema]
     next_cursor: int | None
+
+
+class FeedBootstrapStatusSchema(Schema):
+    status: str
+    ready_items: int
+    target_items: int
+    generated_items: int
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    last_error: str | None = None
 
 
 class TeacherLessonLineInput(Schema):
@@ -249,6 +264,40 @@ def get_teacher_name(lesson: Lesson) -> str:
     return full_name or lesson.teacher.email
 
 
+def get_optional_request_user(request):
+    authorization_header = request.headers.get("Authorization", "")
+    if not authorization_header.startswith("Bearer "):
+        return None
+
+    token = authorization_header.removeprefix("Bearer ").strip()
+    if not token:
+        return None
+    return jwt_auth.authenticate(request, token)
+
+
+def serialize_feed_bootstrap_status(job: PersonalizedFeedJob | None, ready_items: int) -> FeedBootstrapStatusSchema:
+    if job is None:
+        return FeedBootstrapStatusSchema(
+            status=PersonalizedFeedJob.Status.IDLE,
+            ready_items=ready_items,
+            target_items=settings.PERSONALIZED_FEED_TARGET_ITEMS,
+            generated_items=ready_items,
+            started_at=None,
+            finished_at=None,
+            last_error=None,
+        )
+
+    return FeedBootstrapStatusSchema(
+        status=job.status,
+        ready_items=ready_items,
+        target_items=job.target_items,
+        generated_items=job.generated_items,
+        started_at=job.started_at,
+        finished_at=job.finished_at,
+        last_error=job.last_error or None,
+    )
+
+
 def serialize_exercise_lines(exercise: Exercise) -> list[ExerciseLineSchema]:
     saved_lines = list(exercise.lines.all())
     if saved_lines:
@@ -301,9 +350,12 @@ def serialize_lesson_feed_item(lesson: Lesson, match_reason: str | None = None) 
         difficulty=lesson.difficulty,
         tags=lesson.tags,
         media_url=lesson.media_url,
+        cover_image_url=lesson.cover_image_url,
+        source_url=lesson.source_url,
         teacher_name=get_teacher_name(lesson),
         created_at=lesson.created_at,
-        match_reason=match_reason,
+        is_personalized=lesson.visibility == Lesson.Visibility.PRIVATE and lesson.student_id is not None,
+        match_reason=match_reason or lesson.match_reason_hint or None,
     )
 
 
@@ -392,7 +444,13 @@ def sync_exercise_lines(exercise: Exercise, raw_lines: list[TeacherLessonLineInp
 
 
 def build_searchable_lesson_text(lesson: Lesson) -> str:
-    pieces = [lesson.title, lesson.description, " ".join(lesson.tags)]
+    pieces = [
+        lesson.title,
+        lesson.description,
+        lesson.source_title,
+        lesson.match_reason_hint,
+        " ".join(lesson.tags),
+    ]
     if hasattr(lesson, "exercise"):
         pieces.append(lesson.exercise.expected_phrase_en)
         pieces.append(lesson.exercise.expected_phrase_pt)
@@ -409,6 +467,13 @@ def score_lesson_for_student(lesson: Lesson, profile: StudentProfile, user) -> t
     searchable_text = build_searchable_lesson_text(lesson)
     score = 0
     reasons: list[str] = []
+
+    if lesson.visibility == Lesson.Visibility.PRIVATE and lesson.student_id == user.id:
+        score += 100
+        if lesson.match_reason_hint:
+            reasons.append(lesson.match_reason_hint)
+        else:
+            reasons.append("generated from your onboarding")
 
     weighted_preferences = [
         (profile.favorite_songs, 5, "matches favorite song"),
@@ -471,7 +536,10 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     if cached_response is not None:
         return FeedResponseSchema.model_validate(cached_response)
 
-    queryset = Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher")
+    queryset = Lesson.objects.filter(
+        status=Lesson.Status.PUBLISHED,
+        visibility=Lesson.Visibility.PUBLIC,
+    ).select_related("teacher")
     if cursor is not None:
         queryset = queryset.filter(id__lt=cursor)
 
@@ -492,6 +560,26 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
     return response
 
 
+@public_router.get("/feed/bootstrap-status", auth=jwt_auth, response=FeedBootstrapStatusSchema)
+def get_feed_bootstrap_status(request):
+    require_role(request.auth, request.auth.Role.STUDENT)
+    ready_items = count_ready_personalized_lessons(request.auth)
+    job = PersonalizedFeedJob.objects.filter(student=request.auth).first()
+    return serialize_feed_bootstrap_status(job, ready_items)
+
+
+@public_router.post("/feed/bootstrap", auth=jwt_auth, response=FeedBootstrapStatusSchema)
+def bootstrap_feed(request):
+    require_role(request.auth, request.auth.Role.STUDENT)
+    profile = get_or_create_student_profile(request.auth)
+    if not profile.onboarding_completed:
+        raise HttpError(400, "Complete the onboarding before generating the personalized feed.")
+
+    job = enqueue_personalized_feed_bootstrap(request.auth.id, force=True)
+    ready_items = count_ready_personalized_lessons(request.auth)
+    return serialize_feed_bootstrap_status(job, ready_items)
+
+
 @public_router.get("/feed/personalized", auth=jwt_auth, response=FeedResponseSchema)
 def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
     require_role(request.auth, request.auth.Role.STUDENT)
@@ -499,7 +587,12 @@ def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
         raise HttpError(400, "Limit must be between 1 and 50.")
 
     profile = get_or_create_student_profile(request.auth)
-    queryset = Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher", "exercise").prefetch_related("exercise__lines")
+    queryset = (
+        Lesson.objects.filter(status=Lesson.Status.PUBLISHED)
+        .filter(Q(visibility=Lesson.Visibility.PUBLIC) | Q(visibility=Lesson.Visibility.PRIVATE, student=request.auth))
+        .select_related("teacher", "exercise")
+        .prefetch_related("exercise__lines")
+    )
     if cursor is not None:
         queryset = queryset.filter(id__lt=cursor)
 
@@ -522,21 +615,35 @@ def get_personalized_feed(request, cursor: int | None = None, limit: int = 10):
 
 @public_router.get("/lessons/{slug}", response=LessonDetailSchema)
 def get_lesson_detail(request, slug: str):
-    cache_key = build_lesson_detail_cache_key(slug)
-    cached_response = safe_cache_get(cache_key)
-    if cached_response is not None:
-        return LessonDetailSchema.model_validate(cached_response)
+    request_user = get_optional_request_user(request)
+    if request_user is None:
+        cache_key = build_lesson_detail_cache_key(slug)
+        cached_response = safe_cache_get(cache_key)
+        if cached_response is not None:
+            return LessonDetailSchema.model_validate(cached_response)
 
-    lesson = get_object_or_404(
-        Lesson.objects.filter(status=Lesson.Status.PUBLISHED).select_related("teacher", "exercise").prefetch_related("exercise__lines"),
-        slug=slug,
+    queryset = (
+        Lesson.objects.filter(status=Lesson.Status.PUBLISHED)
+        .select_related("teacher", "exercise", "student")
+        .prefetch_related("exercise__lines")
     )
+    if request_user is None:
+        queryset = queryset.filter(visibility=Lesson.Visibility.PUBLIC)
+    else:
+        queryset = queryset.filter(
+            Q(visibility=Lesson.Visibility.PUBLIC)
+            | Q(visibility=Lesson.Visibility.PRIVATE, student=request_user)
+        )
+
+    lesson = get_object_or_404(queryset, slug=slug)
     response = serialize_lesson_detail(lesson)
-    safe_cache_set(
-        cache_key,
-        response.model_dump(mode="json"),
-        timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS,
-    )
+    if lesson.visibility == Lesson.Visibility.PUBLIC:
+        cache_key = build_lesson_detail_cache_key(slug)
+        safe_cache_set(
+            cache_key,
+            response.model_dump(mode="json"),
+            timeout=settings.LESSON_DETAIL_CACHE_TIMEOUT_SECONDS,
+        )
     return response
 
 

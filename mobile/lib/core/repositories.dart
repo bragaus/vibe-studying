@@ -384,9 +384,31 @@ class FeedRepository {
     }
   }
 
-  Future<LessonDetail> getLessonDetail(String slug) async {
+  Future<FeedBootstrapStatus> getFeedBootstrapStatus(String accessToken) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/feed/bootstrap-status',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return FeedBootstrapStatus.fromJson(response.data!);
+  }
+
+  Future<FeedBootstrapStatus> startFeedBootstrap(String accessToken) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/feed/bootstrap',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return FeedBootstrapStatus.fromJson(response.data!);
+  }
+
+  Future<LessonDetail> getLessonDetail(String slug,
+      {String? accessToken}) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/lessons/$slug');
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/lessons/$slug',
+        options: accessToken == null
+            ? null
+            : Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
       final lesson = LessonDetail.fromJson(response.data!);
       await _storage.saveLessonDetail(lesson);
       return lesson;
