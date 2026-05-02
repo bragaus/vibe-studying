@@ -1,13 +1,13 @@
 # Frontend - Vibe Studying
 
-Frontend em React 18 + Vite responsavel pela landing publica, auth web e portal autenticado de distribuicao dos apps Android.
+Frontend em Next.js + React 18 responsavel pela landing publica, auth web e portal autenticado de distribuicao dos apps Android.
 
 ## Stack
 
 - Node.js 20+
 - npm 10+
+- Next.js 14
 - React 18
-- Vite
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
@@ -40,23 +40,23 @@ Arquivo usado pelo projeto: `frontend/.env`
 Exemplo local:
 
 ```env
-VITE_API_URL=http://127.0.0.1:8000/api
-VITE_ANDROID_APP_URL=
-VITE_FLUTTER_ANDROID_URL=
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+NEXT_PUBLIC_ANDROID_APP_URL=
+NEXT_PUBLIC_FLUTTER_ANDROID_URL=
 ```
 
 ### O Que Cada Variavel Faz
 
 | Variavel | Obrigatoria | Uso |
 | --- | --- | --- |
-| `VITE_API_URL` | sim | URL base da API Django Ninja |
-| `VITE_ANDROID_APP_URL` | nao | link para APK Android no portal autenticado |
-| `VITE_FLUTTER_ANDROID_URL` | nao | link para build Flutter Android no portal autenticado |
+| `NEXT_PUBLIC_API_URL` | sim | URL base da API Django Ninja |
+| `NEXT_PUBLIC_ANDROID_APP_URL` | nao | link para APK Android no portal autenticado |
+| `NEXT_PUBLIC_FLUTTER_ANDROID_URL` | nao | link para build Flutter Android no portal autenticado |
 
 ### Observacoes Importantes
 
-- `VITE_API_URL` precisa apontar para a API com o sufixo `/api`
-- se `VITE_ANDROID_APP_URL` ou `VITE_FLUTTER_ANDROID_URL` ficarem vazias, o portal exibira `LINK::PENDING_CONFIG`
+- `NEXT_PUBLIC_API_URL` precisa apontar para a API com o sufixo `/api`
+- se `NEXT_PUBLIC_ANDROID_APP_URL` ou `NEXT_PUBLIC_FLUTTER_ANDROID_URL` ficarem vazias, o portal exibira `LINK::PENDING_CONFIG`
 - para desenvolvimento local com backend na mesma maquina, a configuracao mais comum e `http://127.0.0.1:8000/api`
 
 ## Rodando Em Desenvolvimento
@@ -66,7 +66,7 @@ cd frontend
 npm run dev
 ```
 
-Acesse a URL exibida pelo Vite. Normalmente sera `http://127.0.0.1:8080`.
+Acesse a URL exibida pelo Next.js. Normalmente sera `http://127.0.0.1:3000`.
 
 ## Scripts Disponiveis
 
@@ -75,6 +75,7 @@ npm run dev
 npm run test
 npm run build
 npm run preview
+npm run start
 npm run lint
 ```
 
@@ -95,7 +96,7 @@ npm run lint
 ## Fluxo Local Recomendado
 
 1. Suba o backend primeiro em `http://127.0.0.1:8000`.
-2. Configure `VITE_API_URL=http://127.0.0.1:8000/api`.
+2. Configure `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 3. Rode `npm run dev`.
 4. Teste a landing, waitlist e auth web.
 

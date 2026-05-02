@@ -1,16 +1,15 @@
-import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+"use client";
+
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { getApiBaseUrl } from "@/lib/auth";
-
-const API_BASE_URL = getApiBaseUrl();
 
 const CTASection = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.includes("@")) {
       toast.error("ERR :: email inválido");
@@ -19,7 +18,8 @@ const CTASection = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/waitlist`, {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source: "landing_cta" }),

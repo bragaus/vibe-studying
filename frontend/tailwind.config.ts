@@ -19,9 +19,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
-        display: ['Bungee', '"Space Grotesk"', 'sans-serif'],
+        sans: ["var(--font-space-grotesk)", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "monospace"],
+        display: ["var(--font-bungee)", "var(--font-space-grotesk)", "sans-serif"],
       },
       colors: {
         neon: {

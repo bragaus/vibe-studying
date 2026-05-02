@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Zap } from "lucide-react";
 
 const Navbar = () => {
@@ -17,7 +17,7 @@ const Navbar = () => {
           </span>
         </a>
         <Link
-          to="/auth"
+          href="/auth"
           className="shrink-0 self-center border border-primary px-3 py-2 font-mono-vibe text-[11px] text-primary transition-all hover:bg-primary hover:text-primary-foreground glow-pink sm:px-4 sm:text-xs"
         >
           LOGIN

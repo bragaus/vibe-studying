@@ -1,7 +1,10 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-vibe.jpg";
-import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -11,12 +14,13 @@ const Hero = () => {
     >
       {/* Background image */}
       <div className="absolute inset-0 -z-10">
-        <img
+        <Image
           src={heroImage}
           alt="Estudante anime cyberpunk com fones neon estudando com painéis holográficos"
-          className="w-full h-full object-cover opacity-40"
-          width={1920}
-          height={1080}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-40"
         />
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
@@ -66,7 +70,7 @@ const Hero = () => {
           >
             <Link
               id="cta"
-              to="/auth"
+              href="/auth"
               className="group inline-flex items-center justify-center gap-2 bg-primary px-6 py-4 font-mono-vibe text-sm text-primary-foreground transition-transform hover:scale-[1.02] glow-pink"
             >
               LOGIN

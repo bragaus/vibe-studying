@@ -58,6 +58,8 @@ class StudentProfile(models.Model):
         choices=EnglishLevel.choices,
         default=EnglishLevel.BEGINNER,
     )
+    bio = models.TextField(blank=True, default="", max_length=280)
+    avatar_image = models.FileField(upload_to="student-avatars/", blank=True, null=True)
     favorite_songs = models.JSONField(default=list, blank=True)
     favorite_movies = models.JSONField(default=list, blank=True)
     favorite_series = models.JSONField(default=list, blank=True)
@@ -72,6 +74,54 @@ class StudentProfile(models.Model):
 
     def __str__(self) -> str:
         return f"Profile<{self.user.email}>"
+
+
+class StudentPost(models.Model):
+    """Post curto do aluno para o mural social da plataforma."""
+
+    profile = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="posts")
+    content = models.TextField(max_length=1200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"Post<{self.profile.user.email}:{self.id}>"
+
+
+class StudentPostEnergy(models.Model):
+    """Equivalente ao like, mas com a linguagem de energia do produto."""
+
+    post = models.ForeignKey(StudentPost, on_delete=models.CASCADE, related_name="energies")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="post_energies")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["post", "user"], name="unique_student_post_energy"),
+        ]
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"Energy<{self.user.email}:{self.post_id}>"
+
+
+class StudentPostComment(models.Model):
+    """Comentario textual em um post do mural do aluno."""
+
+    post = models.ForeignKey(StudentPost, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="post_comments")
+    content = models.TextField(max_length=600)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self) -> str:
+        return f"Comment<{self.user.email}:{self.post_id}:{self.id}>"
 
 
 class WaitlistSignup(models.Model):

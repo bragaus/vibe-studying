@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Mic, Infinity as InfinityIcon, Film, Brain } from "lucide-react";
 
