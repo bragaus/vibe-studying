@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -86,12 +86,12 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python -c \"from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health').read()\" >/dev/null 2>&1 || exit 1"
+          "python -c \"import socket; s = socket.create_connection(('127.0.0.1', 8000), 2); s.close()\" >/dev/null 2>&1 || exit 1"
         ]
-      interval: 15s
+      interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 12
+      start_period: 90s
 
   worker:
     build:
