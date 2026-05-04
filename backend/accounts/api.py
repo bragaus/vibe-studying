@@ -413,6 +413,16 @@ def create_account(payload: RegisterInput, role: str):
         return user
 
 
+def enqueue_personalized_feed_bootstrap_after_commit(student_id: int) -> None:
+    try:
+        enqueue_personalized_feed_bootstrap(student_id, force=True)
+    except Exception:
+        logger.exception(
+            "failed to enqueue personalized feed bootstrap after onboarding",
+            extra={"student_id": student_id},
+        )
+
+
 @router.post("/register", response={201: AuthResponseSchema})
 def register_student(request, payload: RegisterInput):
     # Cadastro publico do MVP: apenas aluno entra por aqui.
@@ -494,7 +504,9 @@ def complete_onboarding(request, payload: ProfileUpdateInput):
     require_role(request.auth, request.auth.Role.STUDENT)
     profile = get_or_create_student_profile(request.auth)
     update_student_profile(profile, payload, complete_onboarding=True)
-    transaction.on_commit(lambda: enqueue_personalized_feed_bootstrap(request.auth.id, force=True))
+    transaction.on_commit(
+        lambda: enqueue_personalized_feed_bootstrap_after_commit(request.auth.id)
+    )
     return build_profile_response(request, request.auth)
 
 

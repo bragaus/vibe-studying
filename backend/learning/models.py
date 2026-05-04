@@ -68,6 +68,7 @@ class Lesson(TimeStampedModel):
     difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.EASY)
     tags = models.JSONField(default=list, blank=True)
     media_url = models.URLField(max_length=500)
+    media_manifest = models.JSONField(default=dict, blank=True)
     cover_image_url = models.URLField(max_length=500, blank=True)
     source_url = models.URLField(max_length=500, blank=True)
     source_title = models.CharField(max_length=255, blank=True)
@@ -135,6 +136,9 @@ class ExerciseLine(TimeStampedModel):
     text_en = models.CharField(max_length=255)
     text_pt = models.CharField(max_length=255, blank=True)
     phonetic_hint = models.CharField(max_length=255, blank=True)
+    track_title = models.CharField(max_length=255, blank=True)
+    artist_name = models.CharField(max_length=255, blank=True)
+    segment_index = models.PositiveSmallIntegerField(default=0)
     reference_start_ms = models.PositiveIntegerField(default=0)
     reference_end_ms = models.PositiveIntegerField(default=0)
 
@@ -146,6 +150,38 @@ class ExerciseLine(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.exercise.lesson.title} [{self.order}]"
+
+
+class MusicCatalogEntry(TimeStampedModel):
+    """Cache persistente de letras/traducao e metadados por faixa."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        READY = "ready", _("Ready")
+        FAILED = "failed", _("Failed")
+
+    normalized_key = models.CharField(max_length=255, unique=True)
+    track_title = models.CharField(max_length=255)
+    artist_name = models.CharField(max_length=255)
+    source_provider = models.CharField(max_length=30, default="letras")
+    source_url = models.URLField(max_length=500, blank=True)
+    translation_url = models.URLField(max_length=500, blank=True)
+    listen_url = models.URLField(max_length=500, blank=True)
+    preview_audio_url = models.URLField(max_length=500, blank=True)
+    youtube_url = models.URLField(max_length=500, blank=True)
+    cover_image_url = models.URLField(max_length=500, blank=True)
+    language_code = models.CharField(max_length=20, blank=True, default="")
+    duration_ms = models.PositiveIntegerField(default=0)
+    lyrics_manifest = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    last_error = models.TextField(blank=True)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["artist_name", "track_title"]
+
+    def __str__(self) -> str:
+        return f"MusicCatalogEntry<{self.artist_name}:{self.track_title}>"
 
 
 class Submission(TimeStampedModel):

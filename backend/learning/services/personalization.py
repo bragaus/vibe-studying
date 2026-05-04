@@ -11,11 +11,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
+import logging
 
 from accounts.models import StudentProfile
 from learning.models import Exercise, ExerciseLine, Lesson
+from learning.services.music import generate_music_payloads
 from learning.services.ollama import OllamaClient, OllamaError
 from learning.services.web import ExtractedSource, MultiSearchClient, WebSearchError, extract_source_document
+
+
+logger = logging.getLogger(__name__)
 
 
 class PersonalizationError(RuntimeError):
@@ -344,6 +349,9 @@ def _normalize_line_items(raw_line_items: list[dict], expected_phrase_en: str, e
                 "text_en": text_en,
                 "text_pt": text_pt,
                 "phonetic_hint": _normalize_spaces(item.get("phonetic_hint") or "")[:255],
+                "track_title": _normalize_spaces(item.get("track_title") or "")[:255],
+                "artist_name": _normalize_spaces(item.get("artist_name") or "")[:255],
+                "segment_index": max(int(item.get("segment_index") or 0), 0),
                 "reference_start_ms": start_ms,
                 "reference_end_ms": end_ms,
             }
@@ -357,6 +365,9 @@ def _normalize_line_items(raw_line_items: list[dict], expected_phrase_en: str, e
             "text_en": expected_phrase_en,
             "text_pt": expected_phrase_pt,
             "phonetic_hint": "",
+            "track_title": "",
+            "artist_name": "",
+            "segment_index": 0,
             "reference_start_ms": 0,
             "reference_end_ms": 2200,
         }
@@ -420,6 +431,7 @@ def normalize_generated_items(raw_payload: dict, profile: StudentProfile, target
                 "expected_phrase_en": expected_phrase_en,
                 "expected_phrase_pt": expected_phrase_pt,
                 "line_items": line_items,
+                "media_manifest": item.get("media_manifest") or {},
             }
         )
         if len(normalized_items) >= target_count:
@@ -430,7 +442,7 @@ def normalize_generated_items(raw_payload: dict, profile: StudentProfile, target
     return normalized_items
 
 
-def generate_lesson_payloads(profile: StudentProfile, target_count: int) -> list[dict]:
+def _generate_generic_lesson_payloads(profile: StudentProfile, target_count: int) -> list[dict]:
     try:
         sources = collect_source_documents(profile, target_count)
     except WebSearchError as exc:
@@ -447,6 +459,29 @@ def generate_lesson_payloads(profile: StudentProfile, target_count: int) -> list
     except OllamaError as exc:
         raise PersonalizationError(f"Ollama failed: {exc}") from exc
     return normalize_generated_items(raw_payload, profile, target_count)
+
+
+def generate_lesson_payloads(profile: StudentProfile, target_count: int) -> list[dict]:
+    item_count = max(int(target_count), 1)
+    payloads: list[dict] = []
+
+    try:
+        payloads.extend(generate_music_payloads(profile, item_count))
+    except Exception as exc:
+        logger.warning("music payload generation skipped", extra={"error": str(exc)})
+
+    remaining_count = item_count - len(payloads)
+    if remaining_count <= 0:
+        return payloads[:item_count]
+
+    try:
+        payloads.extend(_generate_generic_lesson_payloads(profile, remaining_count))
+    except PersonalizationError:
+        if payloads:
+            return payloads[:item_count]
+        raise
+
+    return payloads[:item_count]
 
 
 def get_or_create_ai_curator():
@@ -480,6 +515,9 @@ def _create_exercise_lines(exercise: Exercise, line_items: list[dict]) -> None:
                 text_en=line_item["text_en"],
                 text_pt=line_item["text_pt"],
                 phonetic_hint=line_item["phonetic_hint"],
+                track_title=line_item.get("track_title", ""),
+                artist_name=line_item.get("artist_name", ""),
+                segment_index=max(int(line_item.get("segment_index", 0)), 0),
                 reference_start_ms=max(int(line_item["reference_start_ms"]), 0),
                 reference_end_ms=max(int(line_item["reference_end_ms"]), 0),
             )
@@ -510,6 +548,7 @@ def replace_personalized_lessons(student, payloads: list[dict]) -> int:
                 difficulty=payload["difficulty"],
                 tags=payload["tags"],
                 media_url=payload["media_url"],
+                media_manifest=payload.get("media_manifest") or {},
                 cover_image_url=payload["cover_image_url"],
                 source_url=payload["source_url"],
                 source_title=payload["source_title"],

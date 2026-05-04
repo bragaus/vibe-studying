@@ -1,16 +1,81 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vibe_studying_mobile/app/theme.dart';
 import 'package:vibe_studying_mobile/core/models.dart';
 import 'package:vibe_studying_mobile/core/state.dart';
 import 'package:vibe_studying_mobile/shared/hud.dart';
 
-class FeedScreen extends ConsumerWidget {
+enum _HeaderMenuAction { settings, github, logout }
+
+class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
+
+  @override
+  ConsumerState<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends ConsumerState<FeedScreen> {
+  Timer? _bootstrapPollTimer;
+  bool _attemptedBootstrapRecovery = false;
+
+  static final Uri _studentProfileUri =
+      Uri.parse('https://vibestudying.com/viberstudant');
+  static final Uri _projectGithubUri =
+      Uri.parse('https://github.com/bragaus/vibe-studying');
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapPollTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _pollBootstrapStatus(),
+    );
+    Future<void>.microtask(_pollBootstrapStatus);
+  }
+
+  @override
+  void dispose() {
+    _bootstrapPollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _pollBootstrapStatus() async {
+    final session = ref.read(sessionControllerProvider).session;
+    if (session == null) {
+      return;
+    }
+
+    try {
+      final status = await ref
+          .read(feedRepositoryProvider)
+          .getFeedBootstrapStatus(session.accessToken);
+      if (!mounted) {
+        return;
+      }
+
+      ref.invalidate(feedBootstrapStatusProvider);
+      if (status.isDone || status.readyItems > 0) {
+        ref.invalidate(personalizedFeedProvider);
+        return;
+      }
+
+      if (status.hasFailed && !_attemptedBootstrapRecovery) {
+        _attemptedBootstrapRecovery = true;
+        await ref
+            .read(feedRepositoryProvider)
+            .startFeedBootstrap(session.accessToken);
+        ref.invalidate(feedBootstrapStatusProvider);
+      }
+    } catch (_) {
+      return;
+    }
+  }
 
   Future<void> _pickProfilePhoto(BuildContext context, WidgetRef ref) async {
     const imageGroup =
@@ -34,10 +99,70 @@ class FeedScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _openExternalUrl(
+    BuildContext context,
+    Uri uri,
+    String errorMessage,
+  ) async {
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (opened || !context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(errorMessage)),
+    );
+  }
+
+  Future<void> _openStudentProfile(BuildContext context) {
+    return _openExternalUrl(
+      context,
+      _studentProfileUri,
+      'Nao foi possivel abrir o perfil do aluno.',
+    );
+  }
+
+  Future<void> _openProjectGithub(BuildContext context) {
+    return _openExternalUrl(
+      context,
+      _projectGithubUri,
+      'Nao foi possivel abrir o GitHub do projeto.',
+    );
+  }
+
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    await ref.read(sessionControllerProvider.notifier).logout();
+    ref.read(profileControllerProvider.notifier).clear();
+    if (context.mounted) {
+      context.go('/login');
+    }
+  }
+
+  Future<void> _handleMenuAction(
+    _HeaderMenuAction action,
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    switch (action) {
+      case _HeaderMenuAction.settings:
+        return;
+      case _HeaderMenuAction.github:
+        await _openProjectGithub(context);
+        return;
+      case _HeaderMenuAction.logout:
+        await _logout(context, ref);
+        return;
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final sessionState = ref.watch(sessionControllerProvider);
     final profilePhotoPath = ref.watch(profilePhotoPathProvider);
+    final bootstrapStatusAsync = ref.watch(feedBootstrapStatusProvider);
 
     if (!sessionState.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
@@ -52,21 +177,43 @@ class FeedScreen extends ConsumerWidget {
         children: [
           HudHeaderBar(
             title: 'Vibe_Studying',
+            leading: [
+              PopupMenuButton<_HeaderMenuAction>(
+                tooltip: 'Menu',
+                color: AppPalette.panel,
+                surfaceTintColor: Colors.transparent,
+                icon: const Icon(Icons.menu, color: AppPalette.foreground),
+                onSelected: (action) => _handleMenuAction(action, context, ref),
+                itemBuilder: (context) => [
+                  PopupMenuItem<_HeaderMenuAction>(
+                    value: _HeaderMenuAction.settings,
+                    child: Text(
+                      'Configuracao',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  PopupMenuItem<_HeaderMenuAction>(
+                    value: _HeaderMenuAction.github,
+                    child: Text(
+                      'GitHub do projeto',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  PopupMenuItem<_HeaderMenuAction>(
+                    value: _HeaderMenuAction.logout,
+                    child: Text(
+                      'Deslogar',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             actions: [
               _ProfilePhotoButton(
                 imagePath: profilePhotoPath,
-                onPressed: () => _pickProfilePhoto(context, ref),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: () async {
-                  await ref.read(sessionControllerProvider.notifier).logout();
-                  ref.read(profileControllerProvider.notifier).clear();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                },
-                icon: const Icon(Icons.logout, color: AppPalette.foreground),
+                onAvatarPressed: () => _openStudentProfile(context),
+                onAddPressed: () => _pickProfilePhoto(context, ref),
               ),
             ],
           ),
@@ -75,6 +222,7 @@ class FeedScreen extends ConsumerWidget {
               color: AppPalette.neonPink,
               onRefresh: () async {
                 ref.invalidate(personalizedFeedProvider);
+                ref.invalidate(feedBootstrapStatusProvider);
                 await ref
                     .read(profileControllerProvider.notifier)
                     .load(session.accessToken);
@@ -82,12 +230,26 @@ class FeedScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
+                  bootstrapStatusAsync.when(
+                    data: (status) => _BootstrapStatusBanner(status: status),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
                   feedAsync.when(
                     data: (page) {
                       if (page.items.isEmpty) {
-                        return const HudPanel(
+                        final status = bootstrapStatusAsync.valueOrNull;
+                        if (bootstrapStatusAsync.isLoading ||
+                            (status?.isRunning ?? false)) {
+                          return const _FeedGeneratingPlaceholder();
+                        }
+
+                        return HudPanel(
                           child: Text(
-                              'Nenhuma lesson publicada ainda. Crie conteúdo no backend professor para alimentar o feed.'),
+                            status?.hasFailed ?? false
+                                ? 'Sua selecao ainda nao apareceu. Tente puxar para atualizar ou regenerar o bootstrap pelo menu.'
+                                : 'Seu feed ainda esta ficando pronto. Continue explorando que as proximas lessons vao entrar aqui.',
+                          ),
                         );
                       }
 
@@ -100,12 +262,7 @@ class FeedScreen extends ConsumerWidget {
                             .toList(),
                       );
                     },
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                          child: CircularProgressIndicator(
-                              color: AppPalette.neonPink)),
-                    ),
+                    loading: () => const _FeedGeneratingPlaceholder(),
                     error: (error, _) =>
                         HudPanel(child: Text('Falha ao carregar feed: $error')),
                   ),
@@ -119,22 +276,162 @@ class FeedScreen extends ConsumerWidget {
   }
 }
 
-class _ProfilePhotoButton extends StatelessWidget {
-  const _ProfilePhotoButton({required this.imagePath, required this.onPressed});
-
-  final String? imagePath;
-  final VoidCallback onPressed;
+class _FeedGeneratingPlaceholder extends StatelessWidget {
+  const _FeedGeneratingPlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Escolher foto do perfil',
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Stack(
-          clipBehavior: Clip.none,
+    return Column(
+      children: [
+        for (var index = 0; index < 3; index++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: HudPanel(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.32, end: 0.82),
+                duration: Duration(milliseconds: 900 + (index * 140)),
+                curve: Curves.easeInOut,
+                builder: (context, opacity, _) {
+                  return Opacity(
+                    opacity: opacity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 14,
+                          width: 110,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: AppPalette.panelSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          height: 24,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            color: AppPalette.panelSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          height: 14,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: AppPalette.panelSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 14,
+                          width: 220,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: AppPalette.panelSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _BootstrapStatusBanner extends StatelessWidget {
+  const _BootstrapStatusBanner({required this.status});
+
+  final FeedBootstrapStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    if (status.isDone || status.readyItems > 0) {
+      return const SizedBox.shrink();
+    }
+
+    if (status.hasFailed) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: HudPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Sua selecao personalizada ainda nao ficou pronta.',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Nao conseguimos montar sua selecao personalizada agora. Enquanto isso, voce pode navegar pelo feed normalmente e tentar de novo mais tarde.',
+                style: TextStyle(color: AppPalette.muted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!status.isRunning) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: HudPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            Text(
+              'Estamos montando sua selecao musical personalizada.',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Voce ja pode usar o feed enquanto a IA prepara as proximas lessons.',
+              style: TextStyle(color: AppPalette.muted),
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: status.targetItems == 0
+                  ? null
+                  : (status.readyItems / status.targetItems).clamp(0, 1),
+              color: AppPalette.neonPink,
+              backgroundColor: AppPalette.panelSoft,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfilePhotoButton extends StatelessWidget {
+  const _ProfilePhotoButton({
+    required this.imagePath,
+    required this.onAvatarPressed,
+    required this.onAddPressed,
+  });
+
+  final String? imagePath;
+  final VoidCallback onAvatarPressed;
+  final VoidCallback onAddPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Tooltip(
+          message: 'Abrir perfil do aluno',
+          child: GestureDetector(
+            onTap: onAvatarPressed,
+            child: Container(
               width: 42,
               height: 42,
               decoration: BoxDecoration(
@@ -154,23 +451,30 @@ class _ProfilePhotoButton extends StatelessWidget {
                       ),
               ),
             ),
-            Positioned(
-              right: -2,
-              bottom: -2,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppPalette.neonPink,
+          ),
+        ),
+        if (imagePath == null)
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Tooltip(
+              message: 'Escolher foto do perfil',
+              child: GestureDetector(
+                onTap: onAddPressed,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppPalette.neonPink,
+                  ),
+                  child: const Icon(Icons.add,
+                      size: 12, color: AppPalette.background),
                 ),
-                child: const Icon(Icons.add,
-                    size: 12, color: AppPalette.background),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }

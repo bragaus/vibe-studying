@@ -1,0 +1,15 @@
+[2026-05-04 14:40:52,217: INFO/MainProcess] beat: Starting...
+[2026-05-04 14:40:52,232: INFO/MainProcess] Scheduler: Sending due task dispatch-due-email-deliveries-every-minute (operations.tasks.dispatch_due_email_deliveries_task)
+[2026-05-04 14:41:00,000: INFO/MainProcess] Scheduler: Sending due task dispatch-due-email-deliveries-every-minute (operations.tasks.dispatch_due_email_deliveries_task)
+[2026-05-04 14:42:00,000: INFO/MainProcess] Scheduler: Sending due task dispatch-due-email-deliveries-every-minute (operations.tasks.dispatch_due_email_deliveries_task)
+[2026-05-04 14:43:00,000: INFO/MainProcess] Scheduler: Sending due task dispatch-due-email-deliveries-every-minute (operations.tasks.dispatch_due_email_deliveries_task)
+celery beat v5.4.0 (opalescent) is starting.
+__    -    ... __   -        _
+LocalTime -> 2026-05-04 14:40:52
+Configuration ->
+    . broker -> redis://127.0.0.1:6379/0
+    . loader -> celery.loaders.app.AppLoader
+    . scheduler -> celery.beat.PersistentScheduler
+    . db -> celerybeat-schedule
+    . logfile -> [stderr]@%INFO
+    . maxinterval -> 5.00 minutes (300s)

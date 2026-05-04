@@ -1,4 +1,4 @@
-#!/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/bin/python3
+#!/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/bin/python
 import sys
 from dotenv.__main__ import cli
 if __name__ == '__main__':

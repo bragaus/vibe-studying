@@ -25,7 +25,7 @@ Future<String> _resolvePostAuthRoute(
     }
     return '/feed/bootstrap';
   } catch (_) {
-    return '/feed';
+    return '/feed/bootstrap';
   }
 }
 
@@ -98,112 +98,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 }
 
-Future<void> _showBackendUrlDialog(BuildContext context, WidgetRef ref) async {
-  final currentBaseUrl = ref.read(apiBaseUrlControllerProvider);
-  final controller = TextEditingController(text: currentBaseUrl);
-
-  Future<void> save() async {
-    await ref
-        .read(apiBaseUrlControllerProvider.notifier)
-        .update(controller.text);
-    await ref.read(sessionControllerProvider.notifier).logout();
-    ref.read(profileControllerProvider.notifier).clear();
-  }
-
-  Future<void> reset() async {
-    await ref.read(apiBaseUrlControllerProvider.notifier).reset();
-    await ref.read(sessionControllerProvider.notifier).logout();
-    ref.read(profileControllerProvider.notifier).clear();
-  }
-
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppPalette.panel,
-      title: const Text('Backend URL'),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'API base URL',
-                hintText: 'http://192.168.0.10:8000/api',
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Pode ser localhost, IP da rede ou dominio. Se faltar /api, o app completa automaticamente.',
-              style: TextStyle(color: AppPalette.muted, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () async {
-            await reset();
-            if (dialogContext.mounted) {
-              Navigator.of(dialogContext).pop();
-            }
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Backend padrao restaurado: ${ref.read(apiBaseUrlControllerProvider)}',
-                  ),
-                ),
-              );
-            }
-          },
-          child: const Text('Padrao'),
-        ),
-        FilledButton(
-          onPressed: () async {
-            await save();
-            if (dialogContext.mounted) {
-              Navigator.of(dialogContext).pop();
-            }
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Backend atualizado para ${ref.read(apiBaseUrlControllerProvider)}',
-                  ),
-                ),
-              );
-            }
-          },
-          child: const Text('Salvar'),
-        ),
-      ],
-    ),
-  );
-
-  controller.dispose();
-}
-
-class _BackendConfigButton extends ConsumerWidget {
-  const _BackendConfigButton();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
-      tooltip: 'Configurar backend',
-      onPressed: () => _showBackendUrlDialog(context, ref),
-      icon: const Icon(Icons.dns_outlined, color: AppPalette.foreground),
-    );
-  }
-}
-
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -215,6 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _submitting = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -265,11 +160,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final apiBaseUrl = ref.watch(apiBaseUrlControllerProvider);
-
     return HudScaffold(
       title: 'Entrar na vibe',
-      actions: const [_BackendConfigButton()],
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -282,12 +174,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const Text(
                       'Acesse o hub do aluno e sincronize seu feed personalizado.'),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Backend atual: $apiBaseUrl',
-                    style:
-                        const TextStyle(color: AppPalette.muted, fontSize: 12),
-                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _emailController,
@@ -297,8 +183,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Senha'),
+                    obscureText: !_showPassword,
+                    decoration: InputDecoration(
+                      labelText: 'Senha',
+                      suffixIcon: IconButton(
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   NeonButton(
@@ -334,6 +231,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _submitting = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -345,6 +243,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    final passwordError = _validatePassword(_passwordController.text);
+    if (passwordError != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(passwordError)));
+      return;
+    }
+
     setState(() => _submitting = true);
     final session = await ref.read(sessionControllerProvider.notifier).register(
           email: _emailController.text.trim(),
@@ -382,13 +287,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return 'A senha precisa ter pelo menos 8 caracteres.';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'A senha precisa ter pelo menos 1 letra maiuscula.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final apiBaseUrl = ref.watch(apiBaseUrlControllerProvider);
-
     return HudScaffold(
       title: 'INITIALIZE_USER',
-      actions: const [_BackendConfigButton()],
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -401,12 +313,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 children: [
                   const Text(
                       'Crie seu perfil de aluno para montar um feed baseado nos seus gostos.'),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Backend atual: $apiBaseUrl',
-                    style:
-                        const TextStyle(color: AppPalette.muted, fontSize: 12),
-                  ),
                   const SizedBox(height: 20),
                   TextField(
                       controller: _firstNameController,
@@ -425,10 +331,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: !_showPassword,
+                    decoration: InputDecoration(
                       labelText: 'Senha',
-                      helperText: 'Use pelo menos 8 caracteres.',
+                      helperText:
+                          'Use pelo menos 8 caracteres e 1 letra maiuscula.',
+                      helperMaxLines: 3,
+                      suffixIcon: IconButton(
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

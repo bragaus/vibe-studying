@@ -22,17 +22,51 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
   String? _errorMessage;
   bool _loading = true;
   Timer? _pollTimer;
+  Timer? _copyTimer;
+  int _loadingStep = 0;
+
+  static const _loadingMessages = [
+    (
+      'Why do programmers prefer dark mode?',
+      'Por que programadores preferem modo escuro?'
+    ),
+    ('Because light attracts bugs.', 'Porque a luz atrai bugs.'),
+    (
+      'Why did the English student bring a ladder?',
+      'Por que o aluno de ingles levou uma escada?'
+    ),
+    ('To reach the next level.', 'Para alcancar o proximo nivel.'),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _copyTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() => _loadingStep = (_loadingStep + 1) % 4);
+      },
+    );
     Future<void>.microtask(_ensureBootstrapStarted);
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _copyTimer?.cancel();
     super.dispose();
+  }
+
+  void _openFeed() {
+    if (!mounted) {
+      return;
+    }
+    ref.invalidate(personalizedFeedProvider);
+    ref.invalidate(feedBootstrapStatusProvider);
+    context.go('/feed');
   }
 
   Future<void> _ensureBootstrapStarted() async {
@@ -48,7 +82,7 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
     try {
       var nextStatus =
           await repository.getFeedBootstrapStatus(session.accessToken);
-      if (nextStatus.status == 'idle') {
+      if (nextStatus.status == 'idle' || nextStatus.hasFailed) {
         nextStatus = await repository.startFeedBootstrap(session.accessToken);
       }
       _applyStatus(nextStatus);
@@ -126,16 +160,21 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
       return;
     }
 
-    if (status.isDone) {
-      ref.invalidate(personalizedFeedProvider);
-      context.go('/feed');
+    if (status.isDone || status.readyItems > 0) {
+      _openFeed();
+      return;
+    }
+
+    if (status.hasFailed) {
+      // Even without private lessons, the regular feed is still usable.
+      _openFeed();
       return;
     }
 
     setState(() {
       _status = status;
       _loading = false;
-      _errorMessage = null;
+      _errorMessage = status.hasFailed ? status.lastError : null;
     });
 
     if (status.isRunning) {
@@ -146,13 +185,38 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
     }
   }
 
+  double _progressValue() {
+    final status = _status;
+    if (status == null) {
+      return 0.08;
+    }
+
+    if (status.targetItems > 0 && status.readyItems > 0) {
+      return (status.readyItems / status.targetItems).clamp(0, 1);
+    }
+
+    if (status.startedAt != null) {
+      final elapsedSeconds =
+          DateTime.now().difference(status.startedAt!.toLocal()).inSeconds;
+      return (0.12 + (elapsedSeconds / 90)).clamp(0.12, 0.9);
+    }
+
+    if (status.isRunning) {
+      return 0.16;
+    }
+
+    return 0.08;
+  }
+
+  int _progressPercent() => (_progressValue() * 100).round().clamp(0, 100);
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileControllerProvider).valueOrNull?.profile;
     final status = _status;
 
     return HudScaffold(
-      title: 'Montando sua previa',
+      title: 'PROCURANDO SUA VIBE',
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -163,11 +227,8 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'A IA esta buscando frases, referencias e imagens na web para transformar seus gostos em lessons praticaveis.',
-                  ),
                   if (profile != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -188,13 +249,16 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
                     ),
                   ],
                   const SizedBox(height: 20),
-                  if (_loading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: CircularProgressIndicator(
-                            color: AppPalette.neonPink),
-                      ),
+                  if (_loading || (status?.isRunning ?? false))
+                    _BootstrapLoadingPanel(
+                      progressValue: _progressValue(),
+                      progressPercent: _progressPercent(),
+                      jokeEn: _loadingMessages[
+                              _loadingStep % _loadingMessages.length]
+                          .$1,
+                      jokePt: _loadingMessages[
+                              _loadingStep % _loadingMessages.length]
+                          .$2,
                     )
                   else if (_errorMessage != null)
                     Column(
@@ -214,8 +278,8 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => context.go('/feed'),
-                                child: const Text('Ir para feed'),
+                                onPressed: () => context.go('/login'),
+                                child: const Text('Voltar ao login'),
                               ),
                             ),
                           ],
@@ -228,7 +292,7 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
                       children: [
                         Text(
                           status.hasFailed
-                              ? 'A geracao falhou, mas voce pode tentar de novo.'
+                              ? 'Ainda estamos tentando montar sua selecao.'
                               : 'Status atual: ${status.status.toUpperCase()}',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -251,32 +315,14 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
                             style: const TextStyle(color: AppPalette.muted),
                           ),
                         ],
-                        const SizedBox(height: 18),
-                        if (status.hasFailed)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: NeonButton(
-                                  label: 'REGERAR_PREVIA',
-                                  icon: Icons.auto_awesome,
-                                  onPressed: _retryBootstrap,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () => context.go('/feed'),
-                                  child: const Text('Continuar assim mesmo'),
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          OutlinedButton.icon(
-                            onPressed: () => context.go('/feed'),
-                            icon: const Icon(Icons.arrow_forward),
-                            label: const Text('Abrir feed agora'),
+                        if (status.hasFailed) ...[
+                          const SizedBox(height: 18),
+                          NeonButton(
+                            label: 'TENTAR_DE_NOVO',
+                            icon: Icons.auto_awesome,
+                            onPressed: _retryBootstrap,
                           ),
+                        ],
                       ],
                     ),
                 ],
@@ -284,6 +330,64 @@ class _FeedBootstrapScreenState extends ConsumerState<FeedBootstrapScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BootstrapLoadingPanel extends StatelessWidget {
+  const _BootstrapLoadingPanel({
+    required this.progressValue,
+    required this.progressPercent,
+    required this.jokeEn,
+    required this.jokePt,
+  });
+
+  final double progressValue;
+  final int progressPercent;
+  final String jokeEn;
+  final String jokePt;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Scanning references... $progressPercent%',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                LinearProgressIndicator(
+                  value: progressValue,
+                  color: AppPalette.neonPink,
+                  backgroundColor: AppPalette.panelSoft,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${(100 - progressPercent).clamp(0, 100)}% faltando',
+                  style: const TextStyle(color: AppPalette.muted),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  jokeEn,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  jokePt,
+                  style: const TextStyle(color: AppPalette.muted, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

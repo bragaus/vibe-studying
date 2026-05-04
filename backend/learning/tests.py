@@ -1,14 +1,16 @@
 from unittest.mock import patch
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from accounts.jwt import create_token_pair
 from accounts.models import StudentProfile, User
-from learning.models import Exercise, ExerciseLine, Lesson, PersonalizedFeedJob, Submission
+from learning.models import Exercise, ExerciseLine, Lesson, MusicCatalogEntry, PersonalizedFeedJob, Submission
+from learning.services.letras import LetrasSongData
+from learning.services.music import TrackCandidate, build_music_catalog_key, generate_music_payloads
 from learning.services.ollama import OllamaClient
 from learning.services.personalization import PersonalizationError, generate_lesson_payloads
 from learning.services.web import MultiSearchClient, WebSearchError, WebSearchResult
-from learning.tasks import bootstrap_personalized_feed_task
+from learning.tasks import bootstrap_personalized_feed_task, enqueue_personalized_feed_bootstrap
 
 
 class LearningApiTests(TestCase):
@@ -313,6 +315,7 @@ class LearningApiTests(TestCase):
         self.assertEqual(authorized_response.status_code, 200)
         self.assertEqual(authorized_response.json()["slug"], private_lesson.slug)
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_feed_bootstrap_status_reflects_job_state(self):
         PersonalizedFeedJob.objects.create(
             student=self.student,
@@ -352,6 +355,87 @@ class LearningApiTests(TestCase):
         self.assertEqual(response.json()["status"], PersonalizedFeedJob.Status.RUNNING)
         self.assertEqual(response.json()["ready_items"], 1)
         self.assertEqual(response.json()["target_items"], 8)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False, CELERY_BROKER_URL="memory://")
+    def test_feed_bootstrap_status_converts_stuck_pending_job_to_failed(self):
+        PersonalizedFeedJob.objects.create(
+            student=self.student,
+            status=PersonalizedFeedJob.Status.PENDING,
+            target_items=8,
+            generated_items=0,
+        )
+
+        response = self.client.get(
+            "/api/feed/bootstrap-status",
+            HTTP_AUTHORIZATION=f"Bearer {self.student_token}",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], PersonalizedFeedJob.Status.FAILED)
+        self.assertIn("regular feed", response.json()["last_error"])
+
+    def test_lesson_detail_exposes_music_manifest_and_line_track_metadata(self):
+        lesson = Lesson.objects.create(
+            teacher=self.teacher,
+            student=self.student,
+            title="Music Run: Billie + Rihanna",
+            description="Run musical misturado.",
+            content_type=Lesson.ContentType.MUSIC,
+            source_type=Lesson.SourceType.EXTERNAL_LINK,
+            difficulty=Lesson.Difficulty.MEDIUM,
+            tags=["music-run", "Billie Eilish", "Rihanna"],
+            media_url="https://example.com/billie-preview.mp3",
+            media_manifest={
+                "type": "audio_playlist",
+                "playback": "sequential",
+                "speed_up_every_ms": 30000,
+                "items": [
+                    {
+                        "title": "Birds of a Feather",
+                        "artist_name": "Billie Eilish",
+                        "audio_url": "https://example.com/billie-preview.mp3",
+                        "source_url": "https://example.com/billie",
+                        "cover_image_url": "https://example.com/billie.jpg",
+                        "duration_ms": 30000,
+                        "offset_ms": 0,
+                    }
+                ],
+            },
+            source_url="https://example.com/billie",
+            generated_by_ai=True,
+            visibility=Lesson.Visibility.PRIVATE,
+            status=Lesson.Status.PUBLISHED,
+        )
+        exercise = Exercise.objects.create(
+            lesson=lesson,
+            instruction_text="Siga a letra descendo.",
+            expected_phrase_en="I want you to stay.",
+            expected_phrase_pt="Eu quero que voce fique.",
+            max_score=100,
+        )
+        ExerciseLine.objects.create(
+            exercise=exercise,
+            order=1,
+            text_en="I want you to stay.",
+            text_pt="Eu quero que voce fique.",
+            track_title="Birds of a Feather",
+            artist_name="Billie Eilish",
+            segment_index=1,
+            reference_start_ms=0,
+            reference_end_ms=2600,
+        )
+
+        response = self.client.get(
+            f"/api/lessons/{lesson.slug}",
+            HTTP_AUTHORIZATION=f"Bearer {self.student_token}",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["media_manifest"]["type"], "audio_playlist")
+        self.assertEqual(payload["exercise"]["lines"][0]["track_title"], "Birds of a Feather")
+        self.assertEqual(payload["exercise"]["lines"][0]["artist_name"], "Billie Eilish")
+        self.assertEqual(payload["exercise"]["lines"][0]["segment_index"], 1)
 
     @patch("learning.tasks.generate_and_store_personalized_lessons", return_value=3)
     def test_bootstrap_task_marks_job_done(self, generate_and_store_personalized_lessons):
@@ -418,8 +502,9 @@ class SearchServicesTests(TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].url, "https://example.com/fallback")
 
+    @patch("learning.services.personalization.generate_music_payloads", return_value=[])
     @patch("learning.services.personalization.collect_source_documents", side_effect=WebSearchError("connection refused"))
-    def test_generate_lesson_payloads_wraps_web_search_error(self, _collect_source_documents):
+    def test_generate_lesson_payloads_wraps_web_search_error(self, _collect_source_documents, _generate_music_payloads):
         student = User.objects.create_user(
             email="profile2@example.com",
             password="StrongPass123!",
@@ -435,6 +520,115 @@ class SearchServicesTests(TestCase):
             generate_lesson_payloads(profile, 3)
 
         self.assertIn("Web search failed", str(context.exception))
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False, CELERY_BROKER_URL="memory://")
+    def test_enqueue_personalized_feed_bootstrap_fails_fast_without_worker(self):
+        student = User.objects.create_user(
+            email="pending@example.com",
+            password="StrongPass123!",
+            role=User.Role.STUDENT,
+        )
+        StudentProfile.objects.create(
+            user=student,
+            onboarding_completed=True,
+            favorite_songs=["Birds of a Feather"],
+        )
+
+        job = enqueue_personalized_feed_bootstrap(student.id, force=True)
+
+        self.assertEqual(job.status, PersonalizedFeedJob.Status.FAILED)
+        self.assertIn("regular feed", job.last_error)
+
+
+class MusicServicesTests(TestCase):
+    @patch("learning.services.music.fetch_letras_song_data")
+    @patch("learning.services.music.ITunesTrackSearchClient.search")
+    def test_generate_music_payloads_builds_playlist_manifest(
+        self,
+        mocked_track_search,
+        mocked_fetch_letras_song_data,
+    ):
+        mocked_track_search.side_effect = [
+            [
+                TrackCandidate(
+                    track_title="Birds of a Feather",
+                    artist_name="Billie Eilish",
+                    audio_url="https://example.com/billie-preview.mp3",
+                    source_url="https://example.com/billie",
+                    cover_image_url="https://example.com/billie.jpg",
+                    duration_ms=30000,
+                )
+            ],
+            [
+                TrackCandidate(
+                    track_title="Diamonds",
+                    artist_name="Rihanna",
+                    audio_url="https://example.com/rihanna-preview.mp3",
+                    source_url="https://example.com/rihanna",
+                    cover_image_url="https://example.com/rihanna.jpg",
+                    duration_ms=30000,
+                )
+            ],
+        ]
+        mocked_fetch_letras_song_data.side_effect = [
+            LetrasSongData(
+                track_title="Birds of a Feather",
+                artist_name="Billie Eilish",
+                source_url="https://www.letras.com/billie-eilish/birds-of-a-feather/",
+                translation_url="https://www.letras.mus.br/billie-eilish/birds-of-a-feather/traducao.html",
+                cover_image_url="https://example.com/billie.jpg",
+                listen_url="https://www.letras.com/billie-eilish/ouvir.html",
+                youtube_url="https://youtube.com/watch?v=123",
+                language_code="en",
+                line_pairs=[
+                    {"text_en": "I want you to stay.", "text_pt": "Eu quero que voce fique."},
+                    {"text_en": "Till I'm in the grave.", "text_pt": "Ate eu estar no tumulo."},
+                    {"text_en": "Till I rot away.", "text_pt": "Ate eu apodrecer."},
+                    {"text_en": "Dead and buried.", "text_pt": "Morta e enterrada."},
+                ],
+            ),
+            LetrasSongData(
+                track_title="Diamonds",
+                artist_name="Rihanna",
+                source_url="https://www.letras.com/rihanna/diamonds/",
+                translation_url="https://www.letras.mus.br/rihanna/diamonds/traducao.html",
+                cover_image_url="https://example.com/rihanna.jpg",
+                listen_url="https://www.letras.com/rihanna/ouvir.html",
+                youtube_url="https://youtube.com/watch?v=456",
+                language_code="en",
+                line_pairs=[
+                    {"text_en": "Shine bright like a diamond.", "text_pt": "Brilhe como um diamante."},
+                    {"text_en": "Beautiful like diamonds.", "text_pt": "Bonita como diamantes."},
+                    {"text_en": "We are beautiful.", "text_pt": "Nos somos lindos."},
+                    {"text_en": "Like diamonds in the sky.", "text_pt": "Como diamantes no ceu."},
+                ],
+            ),
+        ]
+
+        profile = StudentProfile(
+            english_level=StudentProfile.EnglishLevel.INTERMEDIATE,
+            favorite_songs=["Birds of a Feather"],
+            favorite_artists=["Rihanna"],
+        )
+
+        payloads = generate_music_payloads(profile, 3)
+
+        self.assertEqual(len(payloads), 1)
+        payload = payloads[0]
+        self.assertEqual(payload["content_type"], Lesson.ContentType.MUSIC)
+        self.assertEqual(payload["media_manifest"]["type"], "audio_playlist")
+        self.assertEqual(len(payload["media_manifest"]["items"]), 2)
+        self.assertEqual(payload["line_items"][0]["track_title"], "Birds of a Feather")
+        self.assertEqual(payload["line_items"][0]["segment_index"], 1)
+        self.assertTrue(
+            MusicCatalogEntry.objects.filter(
+                normalized_key=build_music_catalog_key(
+                    "Birds of a Feather",
+                    "Billie Eilish",
+                ),
+                status=MusicCatalogEntry.Status.READY,
+            ).exists()
+        )
 
 
 class _FakeHTTPResponse:

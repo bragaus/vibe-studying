@@ -22,7 +22,13 @@ from accounts.jwt import jwt_auth
 from accounts.models import StudentProfile
 from accounts.permissions import require_role
 from learning.models import Exercise, ExerciseLine, Lesson, PersonalizedFeedJob, Submission, SubmissionLine
-from learning.tasks import count_ready_personalized_lessons, enqueue_personalized_feed_bootstrap, get_or_create_personalized_feed_job
+from learning.services.music import backfill_music_lesson_translations
+from learning.tasks import (
+    count_ready_personalized_lessons,
+    enqueue_personalized_feed_bootstrap,
+    get_or_create_personalized_feed_job,
+    reconcile_personalized_feed_job,
+)
 
 
 public_router = Router()
@@ -39,6 +45,9 @@ class ExerciseLineSchema(Schema):
     text_en: str
     text_pt: str
     phonetic_hint: str
+    track_title: str = ""
+    artist_name: str = ""
+    segment_index: int = 0
     reference_start_ms: int
     reference_end_ms: int
 
@@ -63,6 +72,7 @@ class LessonFeedItemSchema(Schema):
     difficulty: str
     tags: list[str]
     media_url: str
+    media_manifest: dict | None = None
     cover_image_url: str = ""
     source_url: str = ""
     teacher_name: str
@@ -96,6 +106,9 @@ class TeacherLessonLineInput(Schema):
     text_en: str
     text_pt: str = ""
     phonetic_hint: str = ""
+    track_title: str = ""
+    artist_name: str = ""
+    segment_index: int = 0
     reference_start_ms: int = 0
     reference_end_ms: int = 0
 
@@ -108,6 +121,7 @@ class TeacherLessonInput(Schema):
     difficulty: str = Lesson.Difficulty.EASY
     tags: list[str] = []
     media_url: str
+    media_manifest: dict | None = None
     status: str = Lesson.Status.DRAFT
     instruction_text: str
     expected_phrase_en: str
@@ -124,6 +138,7 @@ class TeacherLessonUpdateInput(Schema):
     difficulty: str | None = None
     tags: list[str] | None = None
     media_url: str | None = None
+    media_manifest: dict | None = None
     status: str | None = None
     instruction_text: str | None = None
     expected_phrase_en: str | None = None
@@ -308,6 +323,9 @@ def serialize_exercise_lines(exercise: Exercise) -> list[ExerciseLineSchema]:
                 text_en=line.text_en,
                 text_pt=line.text_pt,
                 phonetic_hint=line.phonetic_hint,
+                track_title=line.track_title,
+                artist_name=line.artist_name,
+                segment_index=line.segment_index,
                 reference_start_ms=line.reference_start_ms,
                 reference_end_ms=line.reference_end_ms,
             )
@@ -321,6 +339,9 @@ def serialize_exercise_lines(exercise: Exercise) -> list[ExerciseLineSchema]:
             text_en=exercise.expected_phrase_en,
             text_pt=exercise.expected_phrase_pt,
             phonetic_hint="",
+            track_title="",
+            artist_name="",
+            segment_index=0,
             reference_start_ms=0,
             reference_end_ms=0,
         )
@@ -350,6 +371,7 @@ def serialize_lesson_feed_item(lesson: Lesson, match_reason: str | None = None) 
         difficulty=lesson.difficulty,
         tags=lesson.tags,
         media_url=lesson.media_url,
+        media_manifest=lesson.media_manifest or None,
         cover_image_url=lesson.cover_image_url,
         source_url=lesson.source_url,
         teacher_name=get_teacher_name(lesson),
@@ -421,6 +443,9 @@ def sync_exercise_lines(exercise: Exercise, raw_lines: list[TeacherLessonLineInp
                 text_en=exercise.expected_phrase_en,
                 text_pt=exercise.expected_phrase_pt,
                 phonetic_hint="",
+                track_title="",
+                artist_name="",
+                segment_index=0,
                 reference_start_ms=0,
                 reference_end_ms=0,
             )
@@ -435,6 +460,9 @@ def sync_exercise_lines(exercise: Exercise, raw_lines: list[TeacherLessonLineInp
                 text_en=line.text_en,
                 text_pt=line.text_pt,
                 phonetic_hint=line.phonetic_hint,
+                track_title=line.track_title,
+                artist_name=line.artist_name,
+                segment_index=max(line.segment_index, 0),
                 reference_start_ms=max(line.reference_start_ms, 0),
                 reference_end_ms=max(line.reference_end_ms, 0),
             )
@@ -564,7 +592,10 @@ def get_feed(request, cursor: int | None = None, limit: int = 10):
 def get_feed_bootstrap_status(request):
     require_role(request.auth, request.auth.Role.STUDENT)
     ready_items = count_ready_personalized_lessons(request.auth)
-    job = PersonalizedFeedJob.objects.filter(student=request.auth).first()
+    job = reconcile_personalized_feed_job(
+        PersonalizedFeedJob.objects.filter(student=request.auth).first(),
+        request.auth,
+    )
     return serialize_feed_bootstrap_status(job, ready_items)
 
 
@@ -636,6 +667,8 @@ def get_lesson_detail(request, slug: str):
         )
 
     lesson = get_object_or_404(queryset, slug=slug)
+    backfill_music_lesson_translations(lesson)
+    lesson.refresh_from_db()
     response = serialize_lesson_detail(lesson)
     if lesson.visibility == Lesson.Visibility.PUBLIC:
         cache_key = build_lesson_detail_cache_key(slug)
@@ -678,6 +711,7 @@ def create_teacher_lesson(request, payload: TeacherLessonInput):
             difficulty=payload.difficulty,
             tags=normalize_keyword_list(payload.tags),
             media_url=payload.media_url,
+            media_manifest=payload.media_manifest or {},
             status=payload.status,
             published_at=timezone.now() if payload.status == Lesson.Status.PUBLISHED else None,
         )
@@ -710,6 +744,7 @@ def update_teacher_lesson(request, lesson_id: int, payload: TeacherLessonUpdateI
         "source_type",
         "difficulty",
         "media_url",
+        "media_manifest",
         "status",
     }
     exercise_fields = {"instruction_text", "expected_phrase_en", "expected_phrase_pt", "max_score"}

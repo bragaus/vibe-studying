@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from accounts.models import User
+
+from accounts.models import SocialAccount, TelegramIdentity, User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
@@ -25,3 +26,19 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
+
+
+@admin.register(SocialAccount)
+class SocialAccountAdmin(admin.ModelAdmin):
+    list_display = ("provider", "user", "provider_user_id", "email", "created_at")
+    list_filter = ("provider",)
+    search_fields = ("user__email", "provider_user_id", "email")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(TelegramIdentity)
+class TelegramIdentityAdmin(admin.ModelAdmin):
+    list_display = ("user", "chat_id", "username", "is_active", "linked_at")
+    list_filter = ("is_active",)
+    search_fields = ("user__email", "username", "chat_id")
+    readonly_fields = ("linked_at", "updated_at")

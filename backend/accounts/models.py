@@ -136,3 +136,56 @@ class WaitlistSignup(models.Model):
 
     def __str__(self) -> str:
         return self.email
+
+
+class SocialAccount(models.Model):
+    """Vinculo entre usuario local e identidade OAuth externa."""
+
+    class Provider(models.TextChoices):
+        GOOGLE = "google", _("Google")
+        GITHUB = "github", _("GitHub")
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="social_accounts",
+    )
+    provider = models.CharField(max_length=20, choices=Provider.choices)
+    provider_user_id = models.CharField(max_length=255)
+    email = models.EmailField(blank=True)
+    avatar_url = models.URLField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["provider", "provider_user_id"]
+        constraints = [
+            models.UniqueConstraint(fields=["provider", "provider_user_id"], name="unique_social_provider_identity"),
+            models.UniqueConstraint(fields=["user", "provider"], name="unique_social_provider_per_user"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.provider}<{self.user.email}>"
+
+
+class TelegramIdentity(models.Model):
+    """Canal Telegram vinculado para confirmacao de login web."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="telegram_identity",
+    )
+    chat_id = models.BigIntegerField(unique=True)
+    username = models.CharField(max_length=255, blank=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    linked_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user__email"]
+
+    def __str__(self) -> str:
+        return f"Telegram<{self.user.email}>"

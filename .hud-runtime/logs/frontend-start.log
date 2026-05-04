@@ -1,0 +1,10 @@
+
+> vite_react_shadcn_ts@0.0.0 start
+> node scripts/start-standalone.mjs
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 158ms

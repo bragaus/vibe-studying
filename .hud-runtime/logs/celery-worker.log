@@ -1,0 +1,129 @@
+ 
+ -------------- celery@bragaus-VJFE59F11X-B0821H v5.4.0 (opalescent)
+--- ***** ----- 
+-- ******* ---- Linux-6.17.0-22-generic-x86_64-with-glibc2.39 2026-05-04 14:40:52
+- *** --- * --- 
+- ** ---------- [config]
+- ** ---------- .> app:         vibe_studying_backend:0x751c8a65a900
+- ** ---------- .> transport:   redis://127.0.0.1:6379/0
+- ** ---------- .> results:     redis://127.0.0.1:6379/2
+- *** --- * --- .> concurrency: 12 (prefork)
+-- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+--- ***** ----- 
+ -------------- [queues]
+                .> default          exchange=default(direct) key=default
+                
+
+[tasks]
+  . learning.tasks.bootstrap_personalized_feed_task
+  . operations.tasks.deliver_email_task
+  . operations.tasks.dispatch_due_email_deliveries_task
+  . operations.tasks.run_operational_checks_task
+  . operations.tasks.schedule_inactivity_reminders_task
+
+[2026-05-04 14:40:52,801: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+whether broker connection retries are made during startup in Celery 6.0 and above.
+If you wish to retain the existing behavior for retrying connections on startup,
+you should set broker_connection_retry_on_startup to True.
+  warnings.warn(
+
+[2026-05-04 14:40:52,814: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
+[2026-05-04 14:40:52,815: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+whether broker connection retries are made during startup in Celery 6.0 and above.
+If you wish to retain the existing behavior for retrying connections on startup,
+you should set broker_connection_retry_on_startup to True.
+  warnings.warn(
+
+[2026-05-04 14:40:52,817: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-04 14:40:53,823: INFO/MainProcess] mingle: all alone
+[2026-05-04 14:40:53,830: INFO/MainProcess] celery@bragaus-VJFE59F11X-B0821H ready.
+[2026-05-04 14:40:53,833: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[3b0e758d-0435-4eaa-b086-4c87e3d76446] received
+2026-05-04 14:40:53,853 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 14:40:53,858: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[3b0e758d-0435-4eaa-b086-4c87e3d76446] succeeded in 0.024317163000887376s: {'count': 0}
+[2026-05-04 14:41:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[0ed0be53-7eec-4f8d-b2f0-07377011d302] received
+2026-05-04 14:41:00,028 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 14:41:00,029: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[0ed0be53-7eec-4f8d-b2f0-07377011d302] succeeded in 0.025938362001397763s: {'count': 0}
+[2026-05-04 14:42:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[fb004c84-c86b-4724-a248-b12d7af932cd] received
+2026-05-04 14:42:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 14:42:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[fb004c84-c86b-4724-a248-b12d7af932cd] succeeded in 0.011675813999318052s: {'count': 0}
+[2026-05-04 14:43:00,003: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[50256c1c-7408-4efd-9aff-437fc8bec990] received
+2026-05-04 14:43:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 14:43:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[50256c1c-7408-4efd-9aff-437fc8bec990] succeeded in 0.012346344999969006s: {'count': 0}
+[2026-05-04 14:43:56,547: WARNING/MainProcess] consumer: Connection to broker lost. Trying to re-establish the connection...
+Traceback (most recent call last):
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py", line 340, in start
+    blueprint.start(self)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/bootsteps.py", line 116, in start
+    step.start(parent)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py", line 746, in start
+    c.loop(*c.loop_args())
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/loops.py", line 97, in asynloop
+    next(loop)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/asynchronous/hub.py", line 377, in create_loop
+    cb(*cbargs)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 1394, in on_readable
+    self.cycle.on_readable(fileno)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 579, in on_readable
+    chan.handlers[type]()
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 931, in _receive
+    ret.append(self._receive_one(c))
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 941, in _receive_one
+    response = c.parse_response()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 865, in parse_response
+    response = self._execute(conn, try_read)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 841, in _execute
+    return conn.retry.call_with_retry(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 65, in call_with_retry
+    fail(error)
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 843, in <lambda>
+    lambda error: self._disconnect_raise_connect(conn, error),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 830, in _disconnect_raise_connect
+    raise error
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 62, in call_with_retry
+    return do()
+           ^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 842, in <lambda>
+    lambda: command(*args, **kwargs),
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 863, in try_read
+    return conn.read_response(disconnect_on_error=False, push_request=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/connection.py", line 592, in read_response
+    response = self._parser.read_response(disable_decoding=disable_decoding)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 15, in read_response
+    result = self._read_response(disable_decoding=disable_decoding)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 25, in _read_response
+    raw = self._buffer.readline()
+          ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py", line 115, in readline
+    self._read_from_socket()
+  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py", line 68, in _read_from_socket
+    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+redis.exceptions.ConnectionError: Connection closed by server.
+[2026-05-04 14:43:56,627: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:391: CPendingDeprecationWarning: 
+In Celery 5.1 we introduced an optional breaking change which
+on connection loss cancels all currently executed tasks with late acknowledgement enabled.
+These tasks cannot be acknowledged as the connection is gone, and the tasks are automatically redelivered
+back to the queue. You can enable this behavior using the worker_cancel_long_running_tasks_on_connection_loss
+setting. In Celery 5.1 it is set to False by default. The setting will be set to True by default in Celery 6.0.
+
+  warnings.warn(CANCEL_TASKS_BY_DEFAULT, CPendingDeprecationWarning)
+
+[2026-05-04 14:43:56,694: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+whether broker connection retries are made during startup in Celery 6.0 and above.
+If you wish to retain the existing behavior for retrying connections on startup,
+you should set broker_connection_retry_on_startup to True.
+  warnings.warn(
+
+[2026-05-04 14:43:56,704: ERROR/MainProcess] consumer: Cannot connect to redis://127.0.0.1:6379/0: Error 111 connecting to 127.0.0.1:6379. Connection refused..
+Trying again in 2.00 seconds... (1/100)
+
+
+worker: Warm shutdown (MainProcess)

@@ -95,8 +95,8 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertFalse(User.objects.filter(email="blocked-teacher@example.com").exists())
 
-    @patch("accounts.api.enqueue_personalized_feed_bootstrap")
-    def test_student_can_fetch_and_complete_profile_onboarding(self, enqueue_personalized_feed_bootstrap):
+    @patch("accounts.api.enqueue_personalized_feed_bootstrap_after_commit")
+    def test_student_can_fetch_and_complete_profile_onboarding(self, enqueue_personalized_feed_bootstrap_after_commit):
         token = self.register_student_and_get_token(email="profile@example.com", first_name="Pro", last_name="File")
 
         profile_response = self.client.get(
@@ -129,7 +129,29 @@ class AuthApiTests(TestCase):
         profile = StudentProfile.objects.get(user__email="profile@example.com")
         self.assertTrue(profile.onboarding_completed)
         self.assertEqual(profile.favorite_artists, ["Linkin Park"])
-        enqueue_personalized_feed_bootstrap.assert_called_once_with(profile.user.id, force=True)
+        enqueue_personalized_feed_bootstrap_after_commit.assert_called_once_with(profile.user.id)
+
+    @patch("accounts.api.enqueue_personalized_feed_bootstrap", side_effect=RuntimeError("worker offline"))
+    def test_student_onboarding_does_not_fail_when_bootstrap_enqueue_breaks(self, _enqueue_personalized_feed_bootstrap):
+        token = self.register_student_and_get_token(
+            email="profile-broker-offline@example.com",
+            first_name="Pro",
+            last_name="Offline",
+        )
+
+        with self.captureOnCommitCallbacks(execute=True):
+            onboarding_response = self.client.post(
+                "/api/profile/onboarding",
+                data={
+                    "english_level": StudentProfile.EnglishLevel.BEGINNER,
+                    "favorite_songs": ["Birds of a Feather"],
+                },
+                content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {token}",
+            )
+
+        self.assertEqual(onboarding_response.status_code, 200)
+        self.assertTrue(onboarding_response.json()["profile"]["onboarding_completed"])
 
     def test_student_can_update_bio_and_receive_social_stats(self):
         token = self.register_student_and_get_token(email="bio@example.com", first_name="Bio", last_name="Field")

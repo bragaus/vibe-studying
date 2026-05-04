@@ -1,0 +1,27 @@
+Watching for file changes with StatReloader
+2026-05-04 14:40:51,299 INFO [django.utils.autoreload] [request_id=-] Watching for file changes with StatReloader
+[04/May/2026 14:40:51] "GET /api/health HTTP/1.1" 200 604
+[04/May/2026 14:41:15] "GET /api/auth/me HTTP/1.1" 200 121
+[04/May/2026 14:41:16] "GET /api/profile/me HTTP/1.1" 200 468
+[04/May/2026 14:41:16] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:16] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:16] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:16] "GET /api/feed/personalized HTTP/1.1" 200 1552
+[04/May/2026 14:41:16] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:16] "GET /api/feed/personalized HTTP/1.1" 200 1552
+[04/May/2026 14:41:21] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:21] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:21] "GET /api/feed/personalized HTTP/1.1" 200 1552
+[04/May/2026 14:41:26] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:26] "GET /api/feed/bootstrap-status HTTP/1.1" 200 182
+[04/May/2026 14:41:26] "GET /api/feed/personalized HTTP/1.1" 200 1552
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 04, 2026 - 14:40:51
+Django version 6.0.4, using settings 'config.settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/

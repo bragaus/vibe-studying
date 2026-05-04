@@ -13,6 +13,10 @@ export type AuthResponsePayload = {
   user: SessionUser;
 };
 
+export type AuthorizationUrlPayload = {
+  authorization_url: string;
+};
+
 export type StoredSession = {
   accessToken: string;
   refreshToken: string;

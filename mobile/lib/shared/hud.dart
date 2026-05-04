@@ -6,12 +6,18 @@ class HudScaffold extends StatelessWidget {
     super.key,
     required this.child,
     this.title,
+    this.leading,
+    this.collapsedLeading,
     this.actions,
+    this.collapsedActions,
   });
 
   final Widget child;
   final String? title;
+  final List<Widget>? leading;
+  final List<Widget>? collapsedLeading;
   final List<Widget>? actions;
+  final List<Widget>? collapsedActions;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +37,14 @@ class HudScaffold extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              if (title != null) HudHeaderBar(title: title!, actions: actions),
+              if (title != null)
+                HudHeaderBar(
+                  title: title!,
+                  leading: leading,
+                  collapsedLeading: collapsedLeading,
+                  actions: actions,
+                  collapsedActions: collapsedActions,
+                ),
               Expanded(child: child),
             ],
           ),
@@ -45,39 +58,145 @@ class HudHeaderBar extends StatelessWidget {
   const HudHeaderBar({
     super.key,
     required this.title,
+    this.leading,
+    this.collapsedLeading,
     this.actions,
+    this.collapsedActions,
   });
 
   final String title;
+  final List<Widget>? leading;
+  final List<Widget>? collapsedLeading;
   final List<Widget>? actions;
+  final List<Widget>? collapsedActions;
 
   @override
   Widget build(BuildContext context) {
-    final headerActions = actions ?? const <Widget>[];
-    final actionSlotWidth = headerActions.length * 56.0;
+    final expandedLeading = leading ?? const <Widget>[];
+    final compactLeading = collapsedLeading ?? expandedLeading;
+    final expandedActions = actions ?? const <Widget>[];
+    final compactActions = collapsedActions ?? expandedActions;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      child: Row(
-        children: [
-          SizedBox(width: actionSlotWidth),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ),
-          SizedBox(
-            width: actionSlotWidth,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child:
-                  Row(mainAxisSize: MainAxisSize.min, children: headerActions),
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final showTitle = title.trim().isNotEmpty &&
+              _hasRoomForTitle(
+                context,
+                maxWidth: constraints.maxWidth,
+                leadingCount: expandedLeading.length,
+                title: title,
+                actionCount: expandedActions.length,
+              );
+          final headerLeading = showTitle ? expandedLeading : compactLeading;
+          final headerActions = showTitle ? expandedActions : compactActions;
+          final leadingSlotWidth =
+              _estimateActionSlotWidth(headerLeading.length);
+          final actionSlotWidth =
+              _estimateActionSlotWidth(headerActions.length);
+          final sideSlotWidth = leadingSlotWidth > actionSlotWidth
+              ? leadingSlotWidth
+              : actionSlotWidth;
+
+          if (!showTitle) {
+            return Row(
+              children: [
+                if (headerLeading.isNotEmpty)
+                  _HeaderActionsRow(actions: headerLeading),
+                const Spacer(),
+                if (headerActions.isNotEmpty)
+                  _HeaderActionsRow(actions: headerActions),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              SizedBox(
+                width: sideSlotWidth,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _HeaderActionsRow(actions: headerLeading),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ),
+              SizedBox(
+                width: sideSlotWidth,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _HeaderActionsRow(actions: headerActions),
+                ),
+              ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  bool _hasRoomForTitle(
+    BuildContext context, {
+    required double maxWidth,
+    required int leadingCount,
+    required String title,
+    required int actionCount,
+  }) {
+    final leadingWidth = _estimateActionSlotWidth(leadingCount);
+    final actionWidth = _estimateActionSlotWidth(actionCount);
+    final sideSlotWidth =
+        leadingWidth > actionWidth ? leadingWidth : actionWidth;
+    final availableTitleWidth = maxWidth - (sideSlotWidth * 2);
+    if (availableTitleWidth <= 0) {
+      return false;
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: Theme.of(context).textTheme.headlineMedium,
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+
+    return textPainter.size.width <= availableTitleWidth;
+  }
+
+  double _estimateActionSlotWidth(int actionCount) {
+    if (actionCount == 0) {
+      return 0;
+    }
+
+    return (actionCount * 48.0) + ((actionCount - 1) * 8.0);
+  }
+}
+
+class _HeaderActionsRow extends StatelessWidget {
+  const _HeaderActionsRow({required this.actions});
+
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < actions.length; index++) ...[
+          if (index > 0) const SizedBox(width: 8),
+          actions[index],
+        ],
+      ],
     );
   }
 }

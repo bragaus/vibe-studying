@@ -9,12 +9,15 @@ from ninja import NinjaAPI
 from config.health import build_health_report
 
 from accounts.api import marketing_router, profile_router, router as auth_router
+from accounts.web_api import web_auth_router
 from learning.api import public_router, submission_router, teacher_router
 
 
 api = NinjaAPI(title="Vibe Studying API", version="0.1.0")
 # Rotas de autenticacao do usuario final.
 api.add_router("/auth", auth_router)
+# Rotas de autenticacao web e login social.
+api.add_router("/auth", web_auth_router)
 # Rotas de perfil/onboarding do aluno.
 api.add_router("/profile", profile_router)
 # Rotas publicas de captacao.

@@ -1,4 +1,4 @@
-#!/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/bin/python3
+#!/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/bin/python
 import sys
 from sqlparse.__main__ import main
 if __name__ == '__main__':

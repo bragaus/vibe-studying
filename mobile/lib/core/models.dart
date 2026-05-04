@@ -150,6 +150,7 @@ class FeedItem {
     required this.difficulty,
     required this.tags,
     required this.mediaUrl,
+    required this.mediaManifest,
     required this.coverImageUrl,
     required this.sourceUrl,
     required this.teacherName,
@@ -166,6 +167,7 @@ class FeedItem {
   final String difficulty;
   final List<String> tags;
   final String mediaUrl;
+  final MediaManifest? mediaManifest;
   final String coverImageUrl;
   final String sourceUrl;
   final String teacherName;
@@ -183,6 +185,10 @@ class FeedItem {
       difficulty: (json['difficulty'] ?? 'easy') as String,
       tags: ((json['tags'] as List<dynamic>? ?? const [])).cast<String>(),
       mediaUrl: json['media_url'] as String,
+      mediaManifest: json['media_manifest'] is Map<String, dynamic>
+          ? MediaManifest.fromJson(
+              json['media_manifest'] as Map<String, dynamic>)
+          : null,
       coverImageUrl: (json['cover_image_url'] ?? '') as String,
       sourceUrl: (json['source_url'] ?? '') as String,
       teacherName: json['teacher_name'] as String,
@@ -202,6 +208,7 @@ class FeedItem {
       'difficulty': difficulty,
       'tags': tags,
       'media_url': mediaUrl,
+      'media_manifest': mediaManifest?.toJson(),
       'cover_image_url': coverImageUrl,
       'source_url': sourceUrl,
       'teacher_name': teacherName,
@@ -290,6 +297,88 @@ class FeedPage {
   }
 }
 
+class MediaPlaylistItem {
+  const MediaPlaylistItem({
+    required this.title,
+    required this.artistName,
+    required this.audioUrl,
+    required this.sourceUrl,
+    required this.coverImageUrl,
+    required this.durationMs,
+    required this.offsetMs,
+  });
+
+  final String title;
+  final String artistName;
+  final String audioUrl;
+  final String sourceUrl;
+  final String coverImageUrl;
+  final int durationMs;
+  final int offsetMs;
+
+  factory MediaPlaylistItem.fromJson(Map<String, dynamic> json) {
+    return MediaPlaylistItem(
+      title: (json['title'] ?? '') as String,
+      artistName: (json['artist_name'] ?? '') as String,
+      audioUrl: (json['audio_url'] ?? '') as String,
+      sourceUrl: (json['source_url'] ?? '') as String,
+      coverImageUrl: (json['cover_image_url'] ?? '') as String,
+      durationMs: (json['duration_ms'] ?? 0) as int,
+      offsetMs: (json['offset_ms'] ?? 0) as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'artist_name': artistName,
+      'audio_url': audioUrl,
+      'source_url': sourceUrl,
+      'cover_image_url': coverImageUrl,
+      'duration_ms': durationMs,
+      'offset_ms': offsetMs,
+    };
+  }
+}
+
+class MediaManifest {
+  const MediaManifest({
+    required this.type,
+    required this.playback,
+    required this.speedUpEveryMs,
+    required this.items,
+  });
+
+  final String type;
+  final String playback;
+  final int speedUpEveryMs;
+  final List<MediaPlaylistItem> items;
+
+  bool get hasPlaylist => items.isNotEmpty;
+
+  factory MediaManifest.fromJson(Map<String, dynamic> json) {
+    return MediaManifest(
+      type: (json['type'] ?? '') as String,
+      playback: (json['playback'] ?? 'sequential') as String,
+      speedUpEveryMs: (json['speed_up_every_ms'] ?? 30000) as int,
+      items: ((json['items'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>())
+          .map(MediaPlaylistItem.fromJson)
+          .where((item) => item.audioUrl.trim().isNotEmpty)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'playback': playback,
+      'speed_up_every_ms': speedUpEveryMs,
+      'items': items.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
 class ExerciseLineItem {
   const ExerciseLineItem({
     required this.id,
@@ -297,6 +386,9 @@ class ExerciseLineItem {
     required this.textEn,
     required this.textPt,
     required this.phoneticHint,
+    required this.trackTitle,
+    required this.artistName,
+    required this.segmentIndex,
     required this.referenceStartMs,
     required this.referenceEndMs,
   });
@@ -306,6 +398,9 @@ class ExerciseLineItem {
   final String textEn;
   final String textPt;
   final String phoneticHint;
+  final String trackTitle;
+  final String artistName;
+  final int segmentIndex;
   final int referenceStartMs;
   final int referenceEndMs;
 
@@ -316,6 +411,9 @@ class ExerciseLineItem {
       textEn: json['text_en'] as String,
       textPt: (json['text_pt'] ?? '') as String,
       phoneticHint: (json['phonetic_hint'] ?? '') as String,
+      trackTitle: (json['track_title'] ?? '') as String,
+      artistName: (json['artist_name'] ?? '') as String,
+      segmentIndex: (json['segment_index'] ?? 0) as int,
       referenceStartMs: (json['reference_start_ms'] ?? 0) as int,
       referenceEndMs: (json['reference_end_ms'] ?? 0) as int,
     );
@@ -328,6 +426,9 @@ class ExerciseLineItem {
       'text_en': textEn,
       'text_pt': textPt,
       'phonetic_hint': phoneticHint,
+      'track_title': trackTitle,
+      'artist_name': artistName,
+      'segment_index': segmentIndex,
       'reference_start_ms': referenceStartMs,
       'reference_end_ms': referenceEndMs,
     };
@@ -389,6 +490,8 @@ class LessonDetail {
     required this.contentType,
     required this.difficulty,
     required this.tags,
+    required this.mediaUrl,
+    required this.mediaManifest,
     required this.coverImageUrl,
     required this.sourceUrl,
     required this.exercise,
@@ -400,6 +503,8 @@ class LessonDetail {
   final String contentType;
   final String difficulty;
   final List<String> tags;
+  final String mediaUrl;
+  final MediaManifest? mediaManifest;
   final String coverImageUrl;
   final String sourceUrl;
   final ExerciseDetail exercise;
@@ -412,6 +517,11 @@ class LessonDetail {
       contentType: json['content_type'] as String,
       difficulty: (json['difficulty'] ?? 'easy') as String,
       tags: ((json['tags'] as List<dynamic>? ?? const [])).cast<String>(),
+      mediaUrl: (json['media_url'] ?? '') as String,
+      mediaManifest: json['media_manifest'] is Map<String, dynamic>
+          ? MediaManifest.fromJson(
+              json['media_manifest'] as Map<String, dynamic>)
+          : null,
       coverImageUrl: (json['cover_image_url'] ?? '') as String,
       sourceUrl: (json['source_url'] ?? '') as String,
       exercise:
@@ -427,6 +537,8 @@ class LessonDetail {
       'content_type': contentType,
       'difficulty': difficulty,
       'tags': tags,
+      'media_url': mediaUrl,
+      'media_manifest': mediaManifest?.toJson(),
       'cover_image_url': coverImageUrl,
       'source_url': sourceUrl,
       'exercise': exercise.toJson(),

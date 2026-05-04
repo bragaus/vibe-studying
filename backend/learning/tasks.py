@@ -3,6 +3,7 @@
 import logging
 
 from celery import shared_task
+from celery.exceptions import CeleryError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -17,6 +18,76 @@ from learning.services.personalization import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def is_personalized_feed_async_available() -> bool:
+    if settings.CELERY_TASK_ALWAYS_EAGER:
+        return True
+
+    broker_url = (settings.CELERY_BROKER_URL or "").strip()
+    if not broker_url or broker_url == "memory://":
+        return False
+
+    try:
+        inspector = bootstrap_personalized_feed_task.app.control.inspect(timeout=0.5)
+        ping_response = inspector.ping() if inspector is not None else None
+    except Exception:
+        return False
+
+    return bool(ping_response)
+
+
+def mark_personalized_feed_job_unavailable(job: PersonalizedFeedJob, student, *, message: str) -> PersonalizedFeedJob:
+    job.status = PersonalizedFeedJob.Status.FAILED
+    job.generated_items = count_ready_personalized_lessons(student)
+    job.last_error = message
+    job.finished_at = timezone.now()
+    job.save(
+        update_fields=[
+            "status",
+            "generated_items",
+            "last_error",
+            "finished_at",
+            "updated_at",
+        ]
+    )
+    return job
+
+
+def reconcile_personalized_feed_job(job: PersonalizedFeedJob | None, student) -> PersonalizedFeedJob | None:
+    if job is None:
+        return None
+
+    now = timezone.now()
+    if job.status == PersonalizedFeedJob.Status.PENDING and job.started_at is None:
+        age_seconds = max((now - job.updated_at).total_seconds(), 0)
+        if age_seconds >= settings.PERSONALIZED_FEED_PENDING_STALE_SECONDS:
+            return mark_personalized_feed_job_unavailable(
+                job,
+                student,
+                message="Personalized bootstrap stalled before execution. Try again from the feed.",
+            )
+
+    if job.status == PersonalizedFeedJob.Status.RUNNING and job.started_at is not None:
+        running_seconds = max((now - job.started_at).total_seconds(), 0)
+        if running_seconds >= settings.PERSONALIZED_FEED_RUNNING_STALE_SECONDS:
+            return mark_personalized_feed_job_unavailable(
+                job,
+                student,
+                message="Personalized bootstrap stalled during processing. Try again from the feed.",
+            )
+
+    if job.status not in {PersonalizedFeedJob.Status.PENDING, PersonalizedFeedJob.Status.RUNNING}:
+        return job
+
+    if is_personalized_feed_async_available():
+        return job
+
+    return mark_personalized_feed_job_unavailable(
+        job,
+        student,
+        message="Personalized bootstrap unavailable; opening regular feed.",
+    )
 
 
 def get_or_create_personalized_feed_job(student) -> PersonalizedFeedJob:
@@ -71,7 +142,33 @@ def enqueue_personalized_feed_bootstrap(student_id: int, *, force: bool = False)
             "updated_at",
         ]
     )
-    bootstrap_personalized_feed_task.delay(student.id, force=force)
+
+    if not is_personalized_feed_async_available():
+        return mark_personalized_feed_job_unavailable(
+            job,
+            student,
+            message="Personalized bootstrap unavailable; opening regular feed.",
+        )
+
+    try:
+        bootstrap_personalized_feed_task.delay(student.id, force=force)
+    except CeleryError:
+        return mark_personalized_feed_job_unavailable(
+            job,
+            student,
+            message="Personalized bootstrap unavailable; opening regular feed.",
+        )
+    except Exception:
+        logger.exception(
+            "failed to enqueue personalized feed bootstrap",
+            extra={"student_id": student.id},
+        )
+        return mark_personalized_feed_job_unavailable(
+            job,
+            student,
+            message="Personalized bootstrap unavailable; opening regular feed.",
+        )
+
     return job
 
 
