@@ -13,6 +13,8 @@ SESSION_START="$(date +%s)"
 SESSION_XP=0
 CURRENT_MODE="idle"
 HUD_MESSAGE="Ready. Choose a mode to boot the stack."
+HUD_LAYOUT_MODE=""
+HUD_BASE_ROW=1
 
 BACKEND_DIR=""
 FRONTEND_DIR=""
@@ -67,6 +69,175 @@ show_cursor() {
   if is_tty; then
     printf '\033[?25h'
   fi
+}
+
+move_to() {
+  if is_tty; then
+    printf '\033[%s;%sH' "$1" "$2"
+  fi
+}
+
+clear_line_at() {
+  local row="$1"
+  move_to "$row" 1
+  printf '\033[2K'
+}
+
+write_line_at() {
+  local row="$1"
+  shift
+  clear_line_at "$row"
+  printf '%b' "$*"
+}
+
+banner_height() {
+  case "$1" in
+    full) printf '11' ;;
+    *) printf '7' ;;
+  esac
+}
+
+progress_meter() {
+  local current="$1"
+  local total="$2"
+  local width="${3:-18}"
+  local color="${4:-$CYAN}"
+  local filled empty i
+
+  if ((total <= 0)); then
+    total=1
+  fi
+
+  if ((current < 0)); then
+    current=0
+  fi
+
+  if ((current > total)); then
+    current=$total
+  fi
+
+  filled=$((current * width / total))
+  empty=$((width - filled))
+
+  printf '%b[' "$GRAY"
+  printf '%b' "$color"
+  for ((i = 0; i < filled; i += 1)); do printf '█'; done
+  printf '%b' "$GRAY"
+  for ((i = 0; i < empty; i += 1)); do printf '░'; done
+  printf '%b]' "$RESET"
+}
+
+player_rank() {
+  if ((SESSION_XP >= 360)); then
+    printf 'FULL-STACK SHOGUN'
+  elif ((SESSION_XP >= 240)); then
+    printf 'QUEUE RONIN'
+  elif ((SESSION_XP >= 120)); then
+    printf 'NEON RUNNER'
+  else
+    printf 'BOOT RECRUIT'
+  fi
+}
+
+xp_to_next_rank() {
+  if ((SESSION_XP >= 360)); then
+    printf '360'
+  elif ((SESSION_XP >= 240)); then
+    printf '360'
+  elif ((SESSION_XP >= 120)); then
+    printf '240'
+  else
+    printf '120'
+  fi
+}
+
+service_is_target() {
+  case "$1" in
+    postgres|backend-server|frontend-dev) return 0 ;;
+    redis|celery-worker|celery-beat)
+      [[ "$CURRENT_MODE" == 'async' || "$CURRENT_MODE" == 'full' ]]
+      return
+      ;;
+    ollama-serve)
+      if [[ "$CURRENT_MODE" == 'full' ]] && command -v ollama >/dev/null 2>&1; then
+        return 0
+      fi
+      return 1
+      ;;
+    mobile-linux)
+      if [[ "$CURRENT_MODE" == 'full' && -d "$MOBILE_DIR" ]] && command -v flutter >/dev/null 2>&1; then
+        return 0
+      fi
+      return 1
+      ;;
+  esac
+
+  return 1
+}
+
+stack_totals() {
+  local total=0 online=0 service status
+  for service in postgres backend-server frontend-dev redis celery-worker celery-beat ollama-serve mobile-linux; do
+    if service_is_target "$service"; then
+      total=$((total + 1))
+      status="$(service_status "$service")"
+      if [[ "$status" == 'ONLINE' ]]; then
+        online=$((online + 1))
+      fi
+    fi
+  done
+
+  printf '%s %s' "$online" "$total"
+}
+
+stack_score() {
+  local totals online total
+  totals="$(stack_totals)"
+  online="${totals%% *}"
+  total="${totals##* }"
+  if ((total == 0)); then
+    printf '0'
+    return
+  fi
+  printf '%s' $((online * 100 / total))
+}
+
+system_heat() {
+  local score
+  score="$(stack_score)"
+  if ((score >= 95)); then
+    printf 'CRUISE'
+  elif ((score >= 70)); then
+    printf 'WATCH'
+  else
+    printf 'DANGER'
+  fi
+}
+
+heat_color() {
+  case "$1" in
+    CRUISE) printf '%b' "$GREEN" ;;
+    WATCH) printf '%b' "$YELLOW" ;;
+    *) printf '%b' "$RED" ;;
+  esac
+}
+
+objective_status() {
+  local service="$1"
+  local label="$2"
+  local status color icon
+  status="$(service_status "$service")"
+  color="$(status_color "$status")"
+  case "$status" in
+    ONLINE) icon='▲' ;;
+    OPTIONAL) icon='◌' ;;
+    *) icon='▼' ;;
+  esac
+  printf '  %b%s%b %s' "$color$BOLD" "$icon" "$RESET" "$label"
+}
+
+current_uplink_time() {
+  date '+%H:%M:%S'
 }
 
 scanline() {
@@ -161,25 +332,30 @@ progress_bar() {
   printf '\n'
 }
 
-service_badge() {
+service_badge_text() {
   local name="$1"
   local status="$2"
   local detail="$3"
 
   case "$status" in
     ONLINE)
-      printf '  %b %b▲ %-11s%b %b%s%b\n' "$BG_DARK$GREEN$BOLD" "$BG_DARK" "$name" "$RESET" "$GREEN" "$detail" "$RESET"
+      printf '  %b %b▲ %-11s%b %b%s%b' "$BG_DARK$GREEN$BOLD" "$BG_DARK" "$name" "$RESET" "$GREEN" "$detail" "$RESET"
       ;;
     OPTIONAL)
-      printf '  %b %b◌ %-11s%b %b%s%b\n' "$BG_DARK$YELLOW$BOLD" "$BG_DARK" "$name" "$RESET" "$YELLOW" "$detail" "$RESET"
+      printf '  %b %b◌ %-11s%b %b%s%b' "$BG_DARK$YELLOW$BOLD" "$BG_DARK" "$name" "$RESET" "$YELLOW" "$detail" "$RESET"
       ;;
     LOADING)
-      printf '  %b %b◈ %-11s%b %b%s%b\n' "$BG_DARK$ORANGE$BOLD" "$BG_DARK" "$name" "$RESET" "$ORANGE" "$detail" "$RESET"
+      printf '  %b %b◈ %-11s%b %b%s%b' "$BG_DARK$ORANGE$BOLD" "$BG_DARK" "$name" "$RESET" "$ORANGE" "$detail" "$RESET"
       ;;
     *)
-      printf '  %b %b▼ %-11s%b %b%s%b\n' "$BG_DARK$RED$BOLD" "$BG_DARK" "$name" "$RESET" "$RED" "$detail" "$RESET"
+      printf '  %b %b▼ %-11s%b %b%s%b' "$BG_DARK$RED$BOLD" "$BG_DARK" "$name" "$RESET" "$RED" "$detail" "$RESET"
       ;;
   esac
+}
+
+service_badge() {
+  service_badge_text "$1" "$2" "$3"
+  printf '\n'
 }
 
 boot_ok() {
@@ -976,7 +1152,21 @@ mission_status() {
 }
 
 render_status_panel() {
-  printf '  %b◈ NEON TELEMETRY%b   %bMODE:%b %s   %bRUNTIME:%b %s   %bXP:%b %s\n' "$CYAN$BOLD" "$RESET" "$GRAY" "$RESET" "$CURRENT_MODE" "$GRAY" "$RESET" "$(runtime)" "$GRAY" "$RESET" "$SESSION_XP"
+  local score heat rank xp_target xp_current score_bar xp_bar
+  score="$(stack_score)"
+  heat="$(system_heat)"
+  rank="$(player_rank)"
+  xp_target="$(xp_to_next_rank)"
+  xp_current="$SESSION_XP"
+  if ((xp_current > xp_target)); then
+    xp_current="$xp_target"
+  fi
+  score_bar="$(progress_meter "$score" 100 22 "$CYAN")"
+  xp_bar="$(progress_meter "$xp_current" "$xp_target" 22 "$MAGENTA")"
+
+  printf '  %b◈ NEON TELEMETRY%b   %bMODE:%b %s   %bRUNTIME:%b %s   %bRANK:%b %s\n' "$CYAN$BOLD" "$RESET" "$GRAY" "$RESET" "$CURRENT_MODE" "$GRAY" "$RESET" "$(runtime)" "$GRAY" "$RESET" "$rank"
+  printf '  %bSTACK SCORE%b %s %b%s%%%b   %bHEAT%b %b%s%b   %bUPLINK%b %s\n' "$GRAY" "$RESET" "$score_bar" "$CYAN$BOLD" "$score" "$RESET" "$GRAY" "$RESET" "$(heat_color "$heat")$BOLD" "$heat" "$RESET" "$GRAY" "$RESET" "$(current_uplink_time)"
+  printf '  %bREP GAIN%b   %s %b%s/%s%b\n' "$GRAY" "$RESET" "$xp_bar" "$MAGENTA$BOLD" "$SESSION_XP" "$xp_target" "$RESET"
   mission_status
   printf '\n'
   print_service_line 'postgres'
@@ -990,15 +1180,114 @@ render_status_panel() {
     print_service_line 'mobile-linux'
   fi
   printf '\n'
+  printf '  %bQUEST LOG%b\n' "$MAGENTA$BOLD" "$RESET"
+  printf '%s\n' "$(objective_status 'backend-server' 'PRIMARY   :: API uplink stable')"
+  printf '%s\n' "$(objective_status 'frontend-dev' 'SECONDARY :: Web portal online')"
+  printf '%s\n' "$(objective_status 'celery-beat' 'TACTICAL  :: Queue automation armed')"
+  if [[ "$CURRENT_MODE" == 'full' ]]; then
+    printf '%s\n' "$(objective_status 'ollama-serve' 'AI FORGE  :: Content generation core available')"
+  fi
+  printf '\n'
   scanline 78
 }
 
+render_live_panel() {
+  local row score heat heat_tone rank xp_target xp_current xp_progress totals online total score_bar xp_bar quests_end
+  local line objective_queue objective_ai objective_mobile
+
+  row="$HUD_BASE_ROW"
+  score="$(stack_score)"
+  heat="$(system_heat)"
+  heat_tone="$(heat_color "$heat")"
+  rank="$(player_rank)"
+  xp_target="$(xp_to_next_rank)"
+  xp_current="$SESSION_XP"
+  if ((xp_current > xp_target)); then
+    xp_current="$xp_target"
+  fi
+  score_bar="$(progress_meter "$score" 100 22 "$CYAN")"
+  xp_bar="$(progress_meter "$xp_current" "$xp_target" 22 "$MAGENTA")"
+  totals="$(stack_totals)"
+  online="${totals%% *}"
+  total="${totals##* }"
+
+  write_line_at "$row" "  ${CYAN}${BOLD}◈ LIVE OPS DECK${RESET}   ${GRAY}MODE:${RESET} ${ORANGE}${BOLD}${CURRENT_MODE^^}${RESET}   ${GRAY}UPLINK:${RESET} ${CYAN}$(current_uplink_time)${RESET}   ${GRAY}RANK:${RESET} ${MAGENTA}${BOLD}${rank}${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${GRAY}SESSION:${RESET} ${YELLOW}$(runtime)${RESET}   ${GRAY}XP:${RESET} ${YELLOW}${BOLD}${SESSION_XP}${RESET}   ${GRAY}STACK SCORE:${RESET} ${CYAN}${BOLD}${score}%${RESET}   ${GRAY}HEAT:${RESET} ${heat_tone}${BOLD}${heat}${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${GRAY}STACK SYNC ${RESET}${score_bar} ${CYAN}${BOLD}${online}/${total}${RESET} nodes online"
+  row=$((row + 1))
+  write_line_at "$row" "  ${GRAY}REP GAIN   ${RESET}${xp_bar} ${MAGENTA}${BOLD}${SESSION_XP}/${xp_target}${RESET} next class"
+  row=$((row + 1))
+  write_line_at "$row" "  ${GRAY}MISSIONS:${RESET} $(objective_status 'backend-server' 'API UPLINK')   $(objective_status 'frontend-dev' 'WEB PORTAL')   $(objective_status 'celery-worker' 'QUEUE LATTICE')"
+  row=$((row + 1))
+  write_line_at "$row" "  ${CYAN}${DIM}──────────────────────────────────────────────────────────────────────────────${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${MAGENTA}${BOLD}SYSTEM NODES${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Postgres' "$(service_status 'postgres')" "$(service_detail 'postgres')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Redis' "$(service_status 'redis')" "$(service_detail 'redis')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Backend' "$(service_status 'backend-server')" "$(service_detail 'backend-server')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Frontend' "$(service_status 'frontend-dev')" "$(service_detail 'frontend-dev')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Worker' "$(service_status 'celery-worker')" "$(service_detail 'celery-worker')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Beat' "$(service_status 'celery-beat')" "$(service_detail 'celery-beat')")"
+  row=$((row + 1))
+  write_line_at "$row" "$(service_badge_text 'Ollama' "$(service_status 'ollama-serve')" "$(service_detail 'ollama-serve')")"
+  row=$((row + 1))
+  if [[ -d "$MOBILE_DIR" ]]; then
+    write_line_at "$row" "$(service_badge_text 'Mobile' "$(service_status 'mobile-linux')" "$(service_detail 'mobile-linux')")"
+    row=$((row + 1))
+  fi
+  write_line_at "$row" "  ${CYAN}${DIM}──────────────────────────────────────────────────────────────────────────────${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${MAGENTA}${BOLD}ACTIVE QUESTS${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "$(objective_status 'backend-server' 'PRIMARY   :: Keep the Django API uplink stable and responding on /api/health')"
+  row=$((row + 1))
+  write_line_at "$row" "$(objective_status 'frontend-dev' 'SECONDARY :: Keep the Next.js neon portal reachable on localhost:3000')"
+  row=$((row + 1))
+  objective_queue="$(objective_status 'celery-beat' 'TACTICAL  :: Keep queue automation armed with worker + beat in async/full modes')"
+  write_line_at "$row" "$objective_queue"
+  row=$((row + 1))
+  if [[ "$CURRENT_MODE" == 'full' ]]; then
+    objective_ai="$(objective_status 'ollama-serve' 'AI FORGE  :: Maintain Ollama online for personalized content generation')"
+    write_line_at "$row" "$objective_ai"
+    row=$((row + 1))
+    if [[ -d "$MOBILE_DIR" ]]; then
+      objective_mobile="$(objective_status 'mobile-linux' 'MOBILE    :: Keep the Linux Flutter client deployed on the deck')"
+      write_line_at "$row" "$objective_mobile"
+      row=$((row + 1))
+    fi
+  fi
+  write_line_at "$row" "  ${CYAN}${DIM}──────────────────────────────────────────────────────────────────────────────${RESET}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${CYAN}${BOLD}COMMAND DECK${RESET}   ${CYAN}[1]${RESET} quick   ${MAGENTA}[2]${RESET} async   ${ORANGE}[3]${RESET} full   ${RED}[s]${RESET} stop   ${BLUE}[l]${RESET} logs   ${GREEN}[r]${RESET} refresh   ${YELLOW}[q]${RESET} quit"
+  row=$((row + 1))
+  write_line_at "$row" "  ${BLUE}${BOLD}SIGNAL${RESET} ${HUD_MESSAGE}"
+  row=$((row + 1))
+  write_line_at "$row" "  ${GRAY}No screen flash: this HUD updates in place with live neon telemetry.${RESET}"
+
+  quests_end=$row
+  row=$((row + 1))
+  while ((row <= HUD_BASE_ROW + 28)); do
+    clear_line_at "$row"
+    row=$((row + 1))
+  done
+  move_to $((quests_end + 1)) 1
+}
+
 render_hud() {
-  draw_mode_banner "$CURRENT_MODE"
-  render_status_panel
-  printf '  %bCommands%b\n' "$CYAN$BOLD" "$RESET"
-  printf '  %b[1]%b quick   %b[2]%b async   %b[3]%b full   %b[s]%b stop   %b[l]%b logs   %b[r]%b refresh   %b[q]%b quit\n' "$CYAN" "$RESET" "$MAGENTA" "$RESET" "$ORANGE" "$RESET" "$RED" "$RESET" "$BLUE" "$RESET" "$GREEN" "$RESET" "$YELLOW" "$RESET"
-  printf '  %bSignal%b %s\n' "$BLUE$BOLD" "$RESET" "$HUD_MESSAGE"
+  if [[ "$HUD_LAYOUT_MODE" != "$CURRENT_MODE" ]]; then
+    draw_mode_banner "$CURRENT_MODE"
+    HUD_BASE_ROW=$(( $(banner_height "$CURRENT_MODE") + 1 ))
+    HUD_LAYOUT_MODE="$CURRENT_MODE"
+  fi
+  render_live_panel
 }
 
 resolve_log_service() {
@@ -1029,19 +1318,24 @@ interactive_logs() {
   local target raw_target
   draw_title_banner 'LOG TUNNEL' 'FOLLOW A SERVICE STREAM :: backend frontend worker beat ollama mobile'
   printf '\n  Log target [backend/frontend/worker/beat/ollama/mobile]: '
+  show_cursor
   read -r raw_target
+  hide_cursor
   target="$(resolve_log_service "$raw_target")"
   if [[ -z "$raw_target" ]]; then
     HUD_MESSAGE='Log view cancelled.'
+    HUD_LAYOUT_MODE=''
     return
   fi
   if [[ ! -f "$(log_file "$target")" ]]; then
     HUD_MESSAGE="No log file for $raw_target yet."
+    HUD_LAYOUT_MODE=''
     return
   fi
   printf '\nPress Ctrl+C to return to the HUD.\n\n'
   tail -f "$(log_file "$target")" || true
   HUD_MESSAGE="Stopped following $raw_target log."
+  HUD_LAYOUT_MODE=''
 }
 
 print_status_summary() {
@@ -1065,10 +1359,12 @@ run_mode_action() {
 
   if ! "$@"; then
     HUD_MESSAGE="${mode^^} mode hit an anomaly. Review the logs in $LOG_DIR."
+    HUD_LAYOUT_MODE=''
     render_mode_snapshot "$mode"
     return 1
   fi
 
+  HUD_LAYOUT_MODE=''
   render_mode_snapshot "$mode"
 }
 
@@ -1077,24 +1373,28 @@ run_stop_action() {
   type_text '  > Executing managed shutdown sequence...' "$RED" 0.006
   printf '\n'
   stop_all_services
+  HUD_LAYOUT_MODE=''
   render_mode_snapshot stop
 }
 
 interactive_loop() {
   local key
+  hide_cursor
   while true; do
-    hide_cursor
     render_hud
-    show_cursor
-    if read -rsn1 -t 1 key; then
+    if read -rsn1 -t 0.25 key; then
       case "$key" in
         1) run_mode_action quick boot_quick || true ;;
         2) run_mode_action async boot_async || true ;;
         3) run_mode_action full boot_full || true ;;
         s|S) run_stop_action ;;
         l|L) interactive_logs ;;
-        r|R) HUD_MESSAGE='HUD refreshed.' ;;
+        r|R)
+          HUD_MESSAGE='HUD refreshed.'
+          HUD_LAYOUT_MODE=''
+          ;;
         q|Q)
+          show_cursor
           printf '\n'
           return 0
           ;;

@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 staticfiles/
+media/
+celerybeat-schedule
+.pytest_cache/

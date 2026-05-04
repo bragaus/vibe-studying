@@ -27,7 +27,7 @@ Try `flutter pub outdated` for more information.
 Launching lib/main.dart on Linux in debug mode...
 Building Linux application...                                   
 ✓ Built build/linux/x64/debug/bundle/vibe_studying_mobile
-Syncing files to device Linux...                                    91ms
+Syncing files to device Linux...                                    93ms
 
 Flutter run key commands.
 r Hot reload. 🔥🔥🔥
@@ -37,6 +37,6 @@ d Detach (terminate "flutter run" but leave application running).
 c Clear the screen
 q Quit (terminate the application on the device).
 
-A Dart VM Service on Linux is available at: http://127.0.0.1:36969/poibgIc_sIE=/
-The Flutter DevTools debugger and profiler on Linux is available at: http://127.0.0.1:36969/poibgIc_sIE=/devtools/?uri=ws://127.0.0.1:36969/poibgIc_sIE=/ws
-Application finished.
+A Dart VM Service on Linux is available at: http://127.0.0.1:42431/GjjoPjUyOd0=/
+The Flutter DevTools debugger and profiler on Linux is available at: http://127.0.0.1:42431/GjjoPjUyOd0=/devtools/?uri=ws://127.0.0.1:42431/GjjoPjUyOd0=/ws
+Lost connection to device.

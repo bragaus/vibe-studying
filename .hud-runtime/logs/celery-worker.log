@@ -1,10 +1,10 @@
  
  -------------- celery@bragaus-VJFE59F11X-B0821H v5.4.0 (opalescent)
 --- ***** ----- 
--- ******* ---- Linux-6.17.0-22-generic-x86_64-with-glibc2.39 2026-05-04 17:05:09
+-- ******* ---- Linux-6.17.0-22-generic-x86_64-with-glibc2.39 2026-05-04 17:48:03
 - *** --- * --- 
 - ** ---------- [config]
-- ** ---------- .> app:         vibe_studying_backend:0x7a4800652990
+- ** ---------- .> app:         vibe_studying_backend:0x7ff5ed73e8d0
 - ** ---------- .> transport:   redis://127.0.0.1:6379/0
 - ** ---------- .> results:     redis://127.0.0.1:6379/2
 - *** --- * --- .> concurrency: 12 (prefork)
@@ -21,53 +21,336 @@
   . operations.tasks.run_operational_checks_task
   . operations.tasks.schedule_inactivity_reminders_task
 
-[2026-05-04 17:05:10,289: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+[2026-05-04 17:48:03,459: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
 whether broker connection retries are made during startup in Celery 6.0 and above.
 If you wish to retain the existing behavior for retrying connections on startup,
 you should set broker_connection_retry_on_startup to True.
   warnings.warn(
 
-[2026-05-04 17:05:10,296: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
-[2026-05-04 17:05:10,296: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+[2026-05-04 17:48:03,469: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
+[2026-05-04 17:48:03,469: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
 whether broker connection retries are made during startup in Celery 6.0 and above.
 If you wish to retain the existing behavior for retrying connections on startup,
 you should set broker_connection_retry_on_startup to True.
   warnings.warn(
 
-[2026-05-04 17:05:10,298: INFO/MainProcess] mingle: searching for neighbors
-[2026-05-04 17:05:11,302: INFO/MainProcess] mingle: all alone
-[2026-05-04 17:05:11,310: INFO/MainProcess] celery@bragaus-VJFE59F11X-B0821H ready.
-[2026-05-04 17:05:12,137: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2bdabf36-3e0b-4510-91e5-a966462d28fb] received
-2026-05-04 17:05:12,152 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:05:12,154: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2bdabf36-3e0b-4510-91e5-a966462d28fb] succeeded in 0.017018303000440937s: {'count': 0}
-[2026-05-04 17:06:00,008: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6437023b-15c7-46ec-a1e3-a7b31842138b] received
-2026-05-04 17:06:00,020 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:06:00,021: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6437023b-15c7-46ec-a1e3-a7b31842138b] succeeded in 0.01236127199990733s: {'count': 0}
-[2026-05-04 17:07:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[c7b3972a-8d46-4882-8e67-f9eb22f9048a] received
-2026-05-04 17:07:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:07:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[c7b3972a-8d46-4882-8e67-f9eb22f9048a] succeeded in 0.012009213000055752s: {'count': 0}
-[2026-05-04 17:08:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[da02ab82-bda0-46b2-a120-e65099ae12e8] received
-2026-05-04 17:08:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:08:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[da02ab82-bda0-46b2-a120-e65099ae12e8] succeeded in 0.011769230999561842s: {'count': 0}
-[2026-05-04 17:09:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a1e27caa-402a-4498-8f26-46db0758ba73] received
-2026-05-04 17:09:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:09:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a1e27caa-402a-4498-8f26-46db0758ba73] succeeded in 0.011780368000472663s: {'count': 0}
-[2026-05-04 17:10:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[500440ac-60ed-4b07-8012-983c006073e6] received
-2026-05-04 17:10:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:10:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[500440ac-60ed-4b07-8012-983c006073e6] succeeded in 0.012133752001318499s: {'count': 0}
-[2026-05-04 17:11:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[cc45127c-75c2-48d9-8696-cf24e0e94dc4] received
-2026-05-04 17:11:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:11:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[cc45127c-75c2-48d9-8696-cf24e0e94dc4] succeeded in 0.012311589000091772s: {'count': 0}
-[2026-05-04 17:12:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6d16add1-587a-4fdb-b8e8-3e3f371e23cd] received
-2026-05-04 17:12:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:12:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6d16add1-587a-4fdb-b8e8-3e3f371e23cd] succeeded in 0.012501250999775948s: {'count': 0}
-[2026-05-04 17:13:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[90714b04-f600-4071-920b-d013f7aba62f] received
-2026-05-04 17:13:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:13:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[90714b04-f600-4071-920b-d013f7aba62f] succeeded in 0.012128131000281428s: {'count': 0}
-[2026-05-04 17:14:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[18d6bd51-90eb-437b-aa7f-9e5b28a4827a] received
-2026-05-04 17:14:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 17:14:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[18d6bd51-90eb-437b-aa7f-9e5b28a4827a] succeeded in 0.012726344999464345s: {'count': 0}
+[2026-05-04 17:48:03,471: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-04 17:48:04,475: INFO/MainProcess] mingle: all alone
+[2026-05-04 17:48:04,483: INFO/MainProcess] celery@bragaus-VJFE59F11X-B0821H ready.
+[2026-05-04 17:48:05,313: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[7b13afca-8730-487f-9710-48d8a575bda0] received
+[2026-05-04 17:48:05,314: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[579262a5-84be-4cdf-af58-077e45189577] received
+2026-05-04 17:48:05,329 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+2026-05-04 17:48:05,330 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 17:48:05,332: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[579262a5-84be-4cdf-af58-077e45189577] succeeded in 0.017040524999174522s: {'count': 0}
+[2026-05-04 17:48:05,332: INFO/ForkPoolWorker-8] Task operations.tasks.run_operational_checks_task[7b13afca-8730-487f-9710-48d8a575bda0] succeeded in 0.019296538999697077s: {'issues': []}
+[2026-05-04 17:49:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2f5a1fce-a990-4817-9600-70205e7ec652] received
+2026-05-04 17:49:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:49:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2f5a1fce-a990-4817-9600-70205e7ec652] succeeded in 0.012459881998438505s: {'count': 0}
+[2026-05-04 17:50:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[4b8071a3-e947-407d-852a-9e78500325c7] received
+2026-05-04 17:50:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:50:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[4b8071a3-e947-407d-852a-9e78500325c7] succeeded in 0.011783422000007704s: {'count': 0}
+[2026-05-04 17:51:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[dbff51aa-a1d1-4525-ad07-91ad55290d5c] received
+2026-05-04 17:51:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:51:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[dbff51aa-a1d1-4525-ad07-91ad55290d5c] succeeded in 0.0120185779996973s: {'count': 0}
+[2026-05-04 17:52:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[14a17f44-572b-461e-ba22-f7805f76c5fd] received
+2026-05-04 17:52:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:52:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[14a17f44-572b-461e-ba22-f7805f76c5fd] succeeded in 0.011969589999353047s: {'count': 0}
+[2026-05-04 17:53:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[0891c55e-27c5-4da9-942c-fca192345ecd] received
+2026-05-04 17:53:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:53:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[0891c55e-27c5-4da9-942c-fca192345ecd] succeeded in 0.011770111001169425s: {'count': 0}
+[2026-05-04 17:54:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[c3ec6ba3-7890-46ad-9edc-5a620b1054b3] received
+2026-05-04 17:54:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:54:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[c3ec6ba3-7890-46ad-9edc-5a620b1054b3] succeeded in 0.012011275000986643s: {'count': 0}
+[2026-05-04 17:55:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[97a6581a-c129-497b-ae43-8e532d30cbf7] received
+2026-05-04 17:55:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:55:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[97a6581a-c129-497b-ae43-8e532d30cbf7] succeeded in 0.01213439700040908s: {'count': 0}
+[2026-05-04 17:56:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6b7f0971-7255-4794-8277-950c73264145] received
+2026-05-04 17:56:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:56:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6b7f0971-7255-4794-8277-950c73264145] succeeded in 0.011486339000839507s: {'count': 0}
+[2026-05-04 17:57:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ff2922de-5bd6-4d2d-b567-9c2272d5221c] received
+2026-05-04 17:57:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:57:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ff2922de-5bd6-4d2d-b567-9c2272d5221c] succeeded in 0.011876499998834333s: {'count': 0}
+[2026-05-04 17:58:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[11c8223c-0c3f-443f-a8df-84600da5f43c] received
+2026-05-04 17:58:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:58:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[11c8223c-0c3f-443f-a8df-84600da5f43c] succeeded in 0.011816140999144409s: {'count': 0}
+[2026-05-04 17:59:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[4ba016fd-50b3-425f-8b9e-26245e73a9f3] received
+2026-05-04 17:59:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:59:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[4ba016fd-50b3-425f-8b9e-26245e73a9f3] succeeded in 0.011721413999111974s: {'count': 0}
+[2026-05-04 18:00:00,001: INFO/MainProcess] Task operations.tasks.schedule_inactivity_reminders_task[add54d9b-ab58-40c0-8e45-3bfe1b3f595d] received
+[2026-05-04 18:00:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[d6cba5c4-8d3f-4369-9814-a27e6f7e8092] received
+[2026-05-04 18:00:00,003: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[1eeb9c55-991d-4251-af52-e7cbb6831baa] received
+2026-05-04 18:00:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:00:00,015: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[d6cba5c4-8d3f-4369-9814-a27e6f7e8092] succeeded in 0.012591046999659739s: {'count': 0}
+2026-05-04 18:00:00,020 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 18:00:00,022: INFO/ForkPoolWorker-9] Task operations.tasks.run_operational_checks_task[1eeb9c55-991d-4251-af52-e7cbb6831baa] succeeded in 0.018468090000169468s: {'issues': []}
+2026-05-04 18:00:00,025 INFO [operations.tasks] [request_id=-] scheduled inactivity reminders
+[2026-05-04 18:00:00,025: INFO/MainProcess] Task operations.tasks.deliver_email_task[90339929-9ba1-475f-bbc7-2167892409af] received
+[2026-05-04 18:00:00,025: INFO/ForkPoolWorker-8] Task operations.tasks.schedule_inactivity_reminders_task[add54d9b-ab58-40c0-8e45-3bfe1b3f595d] succeeded in 0.023256065000168746s: {'count': 1}
+[2026-05-04 18:00:00,040: WARNING/ForkPoolWorker-1] Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+Subject: Voce tem uma sessao pendente no Vibe Studying
+From: noreply@vibestudying.local
+To: bragaus.exe@icloud.com
+Date: Mon, 04 May 2026 21:00:00 +0000
+Message-ID:
+ <177792840004.108965.15339577845821008998@bragaus-VJFE59F11X-B0821H>
 
-worker: Hitting Ctrl+C again will terminate all running tasks!
+Ola, braga!
 
-worker: Warm shutdown (MainProcess)
+Faz cerca de 24 horas desde sua ultima atividade.
+Seu feed e suas lessons continuam prontos para voce retomar o estudo.
+
+Volte em: http://localhost:8080
+[2026-05-04 18:00:00,040: WARNING/ForkPoolWorker-1] -------------------------------------------------------------------------------
+2026-05-04 18:00:00,041 INFO [operations.tasks] [request_id=-] email delivery sent
+[2026-05-04 18:00:00,042: INFO/ForkPoolWorker-1] Task operations.tasks.deliver_email_task[90339929-9ba1-475f-bbc7-2167892409af] succeeded in 0.016062008999142563s: {'status': 'sent', 'delivery_id': 32}
+[2026-05-04 18:01:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[43f4910f-6e74-494d-a2cc-d936beddab81] received
+2026-05-04 18:01:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:01:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[43f4910f-6e74-494d-a2cc-d936beddab81] succeeded in 0.012001819999568397s: {'count': 0}
+[2026-05-04 18:02:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[9e7abf25-33bf-4419-8566-f993dd3a1b87] received
+2026-05-04 18:02:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:02:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[9e7abf25-33bf-4419-8566-f993dd3a1b87] succeeded in 0.012309912999626249s: {'count': 0}
+[2026-05-04 18:03:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[19e759bd-886d-4e5b-b745-bee48c5e267a] received
+2026-05-04 18:03:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:03:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[19e759bd-886d-4e5b-b745-bee48c5e267a] succeeded in 0.011575345000892412s: {'count': 0}
+[2026-05-04 18:04:00,005: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[aa143cba-d208-4003-bd32-17f40247c8e2] received
+2026-05-04 18:04:00,020 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:04:00,021: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[aa143cba-d208-4003-bd32-17f40247c8e2] succeeded in 0.015570262999972329s: {'count': 0}
+[2026-05-04 18:05:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ba116a71-475b-49e3-a0a1-6a115c2f0448] received
+2026-05-04 18:05:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:05:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ba116a71-475b-49e3-a0a1-6a115c2f0448] succeeded in 0.011970838000706863s: {'count': 0}
+[2026-05-04 18:06:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ca9930e1-d565-4464-b40f-b367b2a6823a] received
+2026-05-04 18:06:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:06:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ca9930e1-d565-4464-b40f-b367b2a6823a] succeeded in 0.011511758000779082s: {'count': 0}
+[2026-05-04 18:07:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a91ff9f0-9dba-459d-a7dd-a9c49e501728] received
+2026-05-04 18:07:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:07:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a91ff9f0-9dba-459d-a7dd-a9c49e501728] succeeded in 0.01159279700004845s: {'count': 0}
+[2026-05-04 18:08:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[31839010-623b-41cd-9e97-7f76d1641c9b] received
+2026-05-04 18:08:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:08:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[31839010-623b-41cd-9e97-7f76d1641c9b] succeeded in 0.01182891000098607s: {'count': 0}
+[2026-05-04 18:09:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[02bcf860-831f-42c1-935b-3aba81bae0fc] received
+2026-05-04 18:09:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:09:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[02bcf860-831f-42c1-935b-3aba81bae0fc] succeeded in 0.011644711999906576s: {'count': 0}
+[2026-05-04 18:10:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6717cd84-1cb8-4f11-a51d-2ff7301b6a96] received
+2026-05-04 18:10:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:10:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6717cd84-1cb8-4f11-a51d-2ff7301b6a96] succeeded in 0.011457064998467104s: {'count': 0}
+[2026-05-04 18:11:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[73b06958-5fdf-416b-b1d5-a673a54804f2] received
+2026-05-04 18:11:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:11:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[73b06958-5fdf-416b-b1d5-a673a54804f2] succeeded in 0.011605228000917123s: {'count': 0}
+[2026-05-04 18:12:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[007869ca-b27b-4e21-99f9-1eed35923dfa] received
+2026-05-04 18:12:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:12:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[007869ca-b27b-4e21-99f9-1eed35923dfa] succeeded in 0.011718907000613399s: {'count': 0}
+[2026-05-04 18:13:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[db443311-44be-492a-aa08-6f2608c9ae20] received
+2026-05-04 18:13:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:13:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[db443311-44be-492a-aa08-6f2608c9ae20] succeeded in 0.011900583000169718s: {'count': 0}
+[2026-05-04 18:14:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2df12158-bd17-4b48-821a-ac6ab44d669c] received
+2026-05-04 18:14:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:14:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2df12158-bd17-4b48-821a-ac6ab44d669c] succeeded in 0.012025616999380873s: {'count': 0}
+[2026-05-04 18:15:00,001: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[6083b749-fee6-4091-9c2c-4ce660ac7c95] received
+[2026-05-04 18:15:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[e2c490b4-c5ae-45ce-8582-43b66ec9e67a] received
+2026-05-04 18:15:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:15:00,014: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[e2c490b4-c5ae-45ce-8582-43b66ec9e67a] succeeded in 0.012239171001056093s: {'count': 0}
+2026-05-04 18:15:00,015 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 18:15:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.run_operational_checks_task[6083b749-fee6-4091-9c2c-4ce660ac7c95] succeeded in 0.013376024999161018s: {'issues': []}
+[2026-05-04 18:16:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[858fc39b-9225-4c82-9a55-796a8541f28a] received
+2026-05-04 18:16:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:16:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[858fc39b-9225-4c82-9a55-796a8541f28a] succeeded in 0.011625856999671669s: {'count': 0}
+[2026-05-04 18:17:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a43a69c5-632f-4e25-93bc-c4bf33054831] received
+2026-05-04 18:17:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:17:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a43a69c5-632f-4e25-93bc-c4bf33054831] succeeded in 0.01166980600100942s: {'count': 0}
+[2026-05-04 18:18:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[5588aefd-b110-4961-bcf9-0520978651bb] received
+2026-05-04 18:18:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:18:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[5588aefd-b110-4961-bcf9-0520978651bb] succeeded in 0.013586891998784267s: {'count': 0}
+[2026-05-04 18:19:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[8600299a-e53a-4ca4-a70f-315f3836f8c0] received
+2026-05-04 18:19:00,026 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:19:00,027: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[8600299a-e53a-4ca4-a70f-315f3836f8c0] succeeded in 0.025061917000130052s: {'count': 0}
+[2026-05-04 18:20:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[709e61ab-639d-4eaf-b1cf-abfb733b0806] received
+2026-05-04 18:20:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:20:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[709e61ab-639d-4eaf-b1cf-abfb733b0806] succeeded in 0.012118777000068803s: {'count': 0}
+[2026-05-04 18:21:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[030e5a0f-991d-4da0-a562-4dbd875f8472] received
+2026-05-04 18:21:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:21:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[030e5a0f-991d-4da0-a562-4dbd875f8472] succeeded in 0.012199045000670594s: {'count': 0}
+[2026-05-04 18:22:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2b4a6460-3fa3-4686-be12-42c3ae2b1776] received
+2026-05-04 18:22:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:22:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2b4a6460-3fa3-4686-be12-42c3ae2b1776] succeeded in 0.011750787998607848s: {'count': 0}
+[2026-05-04 18:23:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2b5b72fc-bb94-44e1-91f9-11d56859e22f] received
+2026-05-04 18:23:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:23:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2b5b72fc-bb94-44e1-91f9-11d56859e22f] succeeded in 0.013571616998888203s: {'count': 0}
+[2026-05-04 18:24:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[198aa1a6-dc04-49bc-b9a8-bdd9b88d132c] received
+2026-05-04 18:24:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:24:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[198aa1a6-dc04-49bc-b9a8-bdd9b88d132c] succeeded in 0.012815021000278648s: {'count': 0}
+[2026-05-04 18:25:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a372962e-6145-4a08-a14d-2dd12a4b90b7] received
+2026-05-04 18:25:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:25:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a372962e-6145-4a08-a14d-2dd12a4b90b7] succeeded in 0.01168443499955174s: {'count': 0}
+[2026-05-04 18:26:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[bfac6efe-4ed3-44ca-b2bf-77958385acb7] received
+2026-05-04 18:26:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:26:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[bfac6efe-4ed3-44ca-b2bf-77958385acb7] succeeded in 0.011556467999980669s: {'count': 0}
+[2026-05-04 18:27:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[d4ca1932-e78b-4a6f-940c-51e6c5c37605] received
+2026-05-04 18:27:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:27:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[d4ca1932-e78b-4a6f-940c-51e6c5c37605] succeeded in 0.012552952000987716s: {'count': 0}
+[2026-05-04 18:28:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[fc8f637e-d346-4fa4-a6ad-bb4120ecd375] received
+2026-05-04 18:28:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:28:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[fc8f637e-d346-4fa4-a6ad-bb4120ecd375] succeeded in 0.011762526999518741s: {'count': 0}
+[2026-05-04 18:29:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[1fefeb59-e2b9-4933-9e59-5cecd397a523] received
+2026-05-04 18:29:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:29:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[1fefeb59-e2b9-4933-9e59-5cecd397a523] succeeded in 0.012394129000313114s: {'count': 0}
+[2026-05-04 18:30:00,002: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[18591deb-91c2-4c6a-b495-7befa0d0687a] received
+[2026-05-04 18:30:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[0db791da-bdf3-4fe7-9431-b0ad22bed49a] received
+2026-05-04 18:30:00,015 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 18:30:00,016: INFO/ForkPoolWorker-8] Task operations.tasks.run_operational_checks_task[18591deb-91c2-4c6a-b495-7befa0d0687a] succeeded in 0.013865553999494296s: {'issues': []}
+2026-05-04 18:30:00,017 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:30:00,018: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[0db791da-bdf3-4fe7-9431-b0ad22bed49a] succeeded in 0.013242685001387144s: {'count': 0}
+[2026-05-04 18:31:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[91414724-0558-4277-b3b4-cb1b97a61ee5] received
+2026-05-04 18:31:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:31:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[91414724-0558-4277-b3b4-cb1b97a61ee5] succeeded in 0.011755051000363892s: {'count': 0}
+[2026-05-04 18:32:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6604d92f-82be-408f-b02f-af65fc00d92d] received
+2026-05-04 18:32:00,019 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:32:00,019: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6604d92f-82be-408f-b02f-af65fc00d92d] succeeded in 0.017669550999926287s: {'count': 0}
+[2026-05-04 18:33:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[c238a519-e592-4aef-8670-c00d5c3cc52a] received
+2026-05-04 18:33:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:33:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[c238a519-e592-4aef-8670-c00d5c3cc52a] succeeded in 0.011897438000232796s: {'count': 0}
+[2026-05-04 18:34:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[bae4c07b-3593-4e84-bec9-b3b528cf23aa] received
+2026-05-04 18:34:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:34:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[bae4c07b-3593-4e84-bec9-b3b528cf23aa] succeeded in 0.011539303000972723s: {'count': 0}
+[2026-05-04 18:35:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[76e6d233-affd-4cae-8cc7-1012fc5f7ce4] received
+2026-05-04 18:35:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:35:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[76e6d233-affd-4cae-8cc7-1012fc5f7ce4] succeeded in 0.012485676999858697s: {'count': 0}
+[2026-05-04 18:36:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ae6890d0-8fbf-436c-a3ca-7001f618854b] received
+2026-05-04 18:36:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:36:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ae6890d0-8fbf-436c-a3ca-7001f618854b] succeeded in 0.01221082800111617s: {'count': 0}
+[2026-05-04 18:37:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[21a1c746-a7e7-4a9d-89f9-d9227b39d4aa] received
+2026-05-04 18:37:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:37:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[21a1c746-a7e7-4a9d-89f9-d9227b39d4aa] succeeded in 0.012682968001172412s: {'count': 0}
+[2026-05-04 18:38:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[c904eb34-ef66-4bcd-adee-c00db99b2ff1] received
+2026-05-04 18:38:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:38:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[c904eb34-ef66-4bcd-adee-c00db99b2ff1] succeeded in 0.012175264000688912s: {'count': 0}
+[2026-05-04 18:39:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[09688b2e-a681-407c-9fb2-d796cba7831b] received
+2026-05-04 18:39:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:39:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[09688b2e-a681-407c-9fb2-d796cba7831b] succeeded in 0.012505839000368724s: {'count': 0}
+[2026-05-04 18:40:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[05e95d70-60ab-4af9-b00d-318bdaed7d47] received
+2026-05-04 18:40:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:40:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[05e95d70-60ab-4af9-b00d-318bdaed7d47] succeeded in 0.012175537000075565s: {'count': 0}
+[2026-05-04 18:41:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ecb1e929-6674-469b-9805-ad0fac6c0e5a] received
+2026-05-04 18:41:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:41:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ecb1e929-6674-469b-9805-ad0fac6c0e5a] succeeded in 0.012332616999628954s: {'count': 0}
+[2026-05-04 18:42:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[f9a0041a-a095-49a6-acc2-3e5444edb1a4] received
+2026-05-04 18:42:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:42:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[f9a0041a-a095-49a6-acc2-3e5444edb1a4] succeeded in 0.012154246000136482s: {'count': 0}
+[2026-05-04 18:43:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a9d8f62d-5c73-473b-8f5b-b94088a3d9d1] received
+2026-05-04 18:43:00,017 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:43:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a9d8f62d-5c73-473b-8f5b-b94088a3d9d1] succeeded in 0.012707904999842867s: {'count': 0}
+[2026-05-04 18:44:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[73577190-9404-43c1-b993-9709cdba7ffd] received
+2026-05-04 18:44:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:44:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[73577190-9404-43c1-b993-9709cdba7ffd] succeeded in 0.011950493999393075s: {'count': 0}
+[2026-05-04 18:45:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[40dbbdae-4f5a-469c-8962-1479fce9eb11] received
+[2026-05-04 18:45:00,005: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[4f05bd48-4dd6-4cc7-9662-0601a4a978db] received
+2026-05-04 18:45:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:45:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[40dbbdae-4f5a-469c-8962-1479fce9eb11] succeeded in 0.014742199000465916s: {'count': 0}
+2026-05-04 18:45:00,053 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 18:45:00,057: INFO/ForkPoolWorker-1] Task operations.tasks.run_operational_checks_task[4f05bd48-4dd6-4cc7-9662-0601a4a978db] succeeded in 0.05080922500019369s: {'issues': []}
+[2026-05-04 18:46:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[d4303ddc-a034-4b0c-8e96-4f055446dc29] received
+2026-05-04 18:46:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:46:00,016: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[d4303ddc-a034-4b0c-8e96-4f055446dc29] succeeded in 0.011539527999048005s: {'count': 0}
+[2026-05-04 18:47:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[3429d2bf-f200-496c-9ffb-cc8406801cc3] received
+2026-05-04 18:47:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:47:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[3429d2bf-f200-496c-9ffb-cc8406801cc3] succeeded in 0.012263840999366948s: {'count': 0}
+[2026-05-04 18:48:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[85bd5644-2561-41b1-9ec3-cad4abd99c93] received
+2026-05-04 18:48:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:48:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[85bd5644-2561-41b1-9ec3-cad4abd99c93] succeeded in 0.013029220999669633s: {'count': 0}
+[2026-05-04 18:49:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[0cdf3a50-be1d-4307-bc1f-f5d120e71ffd] received
+2026-05-04 18:49:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:49:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[0cdf3a50-be1d-4307-bc1f-f5d120e71ffd] succeeded in 0.01231785299933108s: {'count': 0}
+[2026-05-04 18:50:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[32de0a8e-eb36-4703-ac91-e11aee1ea7c6] received
+2026-05-04 18:50:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:50:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[32de0a8e-eb36-4703-ac91-e11aee1ea7c6] succeeded in 0.011620612000115216s: {'count': 0}
+[2026-05-04 18:51:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[29be9733-8c85-4588-bc17-659893adeaec] received
+2026-05-04 18:51:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:51:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[29be9733-8c85-4588-bc17-659893adeaec] succeeded in 0.012660548998610466s: {'count': 0}
+[2026-05-04 18:52:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a96cb26b-1a15-4db0-becf-9c37222d7b58] received
+2026-05-04 18:52:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:52:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a96cb26b-1a15-4db0-becf-9c37222d7b58] succeeded in 0.015290002000256209s: {'count': 0}
+[2026-05-04 18:53:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[e420d326-99b9-4570-961c-b37bcaad7d49] received
+2026-05-04 18:53:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:53:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[e420d326-99b9-4570-961c-b37bcaad7d49] succeeded in 0.011566482999114669s: {'count': 0}
+[2026-05-04 18:54:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[4b576e5f-b201-4407-b29f-3faaa6bf92c1] received
+2026-05-04 18:54:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:54:00,016: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[4b576e5f-b201-4407-b29f-3faaa6bf92c1] succeeded in 0.0146089240006404s: {'count': 0}
+[2026-05-04 18:55:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[83b226d3-5f58-4ef9-9a14-9ae2ffd24dca] received
+2026-05-04 18:55:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:55:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[83b226d3-5f58-4ef9-9a14-9ae2ffd24dca] succeeded in 0.015304246000596322s: {'count': 0}
+[2026-05-04 18:56:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[e4bed343-c7d6-4a07-9419-2033c4e0d55d] received
+2026-05-04 18:56:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:56:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[e4bed343-c7d6-4a07-9419-2033c4e0d55d] succeeded in 0.011686924000969157s: {'count': 0}
+[2026-05-04 18:57:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6cdde231-7dbe-46b0-b18c-43c67f40e511] received
+2026-05-04 18:57:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:57:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6cdde231-7dbe-46b0-b18c-43c67f40e511] succeeded in 0.014997948999734945s: {'count': 0}
+[2026-05-04 18:58:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[72653eb1-9c83-4b5b-9c94-77855e1a85ad] received
+2026-05-04 18:58:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:58:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[72653eb1-9c83-4b5b-9c94-77855e1a85ad] succeeded in 0.011733366998669226s: {'count': 0}
+[2026-05-04 18:59:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[848797a9-0a6d-4796-8e89-682f535010f1] received
+2026-05-04 18:59:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 18:59:00,016: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[848797a9-0a6d-4796-8e89-682f535010f1] succeeded in 0.012308497000049101s: {'count': 0}
+[2026-05-04 19:00:00,015: INFO/MainProcess] Task operations.tasks.schedule_inactivity_reminders_task[24f09c2c-9487-4eee-820c-50eacf187cb4] received
+[2026-05-04 19:00:00,016: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a421fd8b-d7db-4954-bc7c-30c0873c8e4e] received
+[2026-05-04 19:00:00,023: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[e5b00b2a-1685-4f62-8b37-1b087b203aa0] received
+2026-05-04 19:00:00,044 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:00:00,044: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[a421fd8b-d7db-4954-bc7c-30c0873c8e4e] succeeded in 0.022518723000757745s: {'count': 0}
+2026-05-04 19:00:00,317 INFO [operations.tasks] [request_id=-] scheduled inactivity reminders
+[2026-05-04 19:00:00,317: INFO/ForkPoolWorker-8] Task operations.tasks.schedule_inactivity_reminders_task[24f09c2c-9487-4eee-820c-50eacf187cb4] succeeded in 0.2951029779997043s: {'count': 0}
+2026-05-04 19:00:00,454 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+[2026-05-04 19:00:00,506: INFO/ForkPoolWorker-9] Task operations.tasks.run_operational_checks_task[e5b00b2a-1685-4f62-8b37-1b087b203aa0] succeeded in 0.21488852299989958s: {'issues': []}
+[2026-05-04 19:01:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[8e7bed39-7407-4f66-a1a7-35a6fa4a6aeb] received
+2026-05-04 19:01:00,023 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:01:00,024: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[8e7bed39-7407-4f66-a1a7-35a6fa4a6aeb] succeeded in 0.01771262699912768s: {'count': 0}
+[2026-05-04 19:02:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[cf185ff2-70c1-4e4d-90f0-5925c0fae028] received
+2026-05-04 19:02:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:02:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[cf185ff2-70c1-4e4d-90f0-5925c0fae028] succeeded in 0.012659861000429373s: {'count': 0}
+[2026-05-04 19:03:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2fd5e67d-0880-473c-8ccb-a39e6a04f5ee] received
+2026-05-04 19:03:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:03:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2fd5e67d-0880-473c-8ccb-a39e6a04f5ee] succeeded in 0.012346258999968995s: {'count': 0}
+[2026-05-04 19:04:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[9a59d9f5-6b34-4a34-bae9-9db950ae827c] received
+2026-05-04 19:04:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:04:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[9a59d9f5-6b34-4a34-bae9-9db950ae827c] succeeded in 0.012309759000345366s: {'count': 0}
+[2026-05-04 19:05:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[ec3804c2-ffda-4a0a-b18c-4cc8133f29da] received
+2026-05-04 19:05:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:05:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[ec3804c2-ffda-4a0a-b18c-4cc8133f29da] succeeded in 0.011844893000670709s: {'count': 0}
+[2026-05-04 19:06:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[344b8c84-369b-4f3d-bdbd-f91f0aebfda1] received
+2026-05-04 19:06:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:06:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[344b8c84-369b-4f3d-bdbd-f91f0aebfda1] succeeded in 0.012106452999432804s: {'count': 0}
+[2026-05-04 19:07:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[fa7e5c06-1e37-4700-9ee5-763c6573c13a] received
+2026-05-04 19:07:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:07:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[fa7e5c06-1e37-4700-9ee5-763c6573c13a] succeeded in 0.012407424999764771s: {'count': 0}
+[2026-05-04 19:08:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[e1c90a1e-680d-4548-9fd0-7416b6d6068d] received
+2026-05-04 19:08:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:08:00,019: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[e1c90a1e-680d-4548-9fd0-7416b6d6068d] succeeded in 0.014556275000359165s: {'count': 0}
+[2026-05-04 19:09:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[e138a7b3-f31d-4b3a-8b0e-80b2af183617] received
+2026-05-04 19:09:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:09:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[e138a7b3-f31d-4b3a-8b0e-80b2af183617] succeeded in 0.011851568999190931s: {'count': 0}
+[2026-05-04 19:10:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[260b0206-35f2-41c7-acf1-ad8ba66d4892] received
+2026-05-04 19:10:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:10:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[260b0206-35f2-41c7-acf1-ad8ba66d4892] succeeded in 0.011692695999954594s: {'count': 0}
+[2026-05-04 19:11:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6849caef-181b-460a-84b9-67de04598dc4] received
+2026-05-04 19:11:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:11:00,016: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6849caef-181b-460a-84b9-67de04598dc4] succeeded in 0.014475306999884197s: {'count': 0}
+[2026-05-04 19:12:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6c22849e-7da5-4018-a5a8-bbc3a4340bac] received
+2026-05-04 19:12:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:12:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6c22849e-7da5-4018-a5a8-bbc3a4340bac] succeeded in 0.012765207000484224s: {'count': 0}
+[2026-05-04 19:13:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[383c7107-1bb8-47ec-ab11-aeab4cad9f57] received
+2026-05-04 19:13:00,012 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:13:00,013: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[383c7107-1bb8-47ec-ab11-aeab4cad9f57] succeeded in 0.011611871999775758s: {'count': 0}
+[2026-05-04 19:14:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[858f7e02-30e0-493c-bcf2-788a8594d0f9] received
+2026-05-04 19:14:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:14:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[858f7e02-30e0-493c-bcf2-788a8594d0f9] succeeded in 0.012338602000454557s: {'count': 0}
+[2026-05-04 19:15:00,004: INFO/MainProcess] Task operations.tasks.run_operational_checks_task[8026a2f9-dcae-40f4-a8b3-68219a652c49] received
+[2026-05-04 19:15:00,006: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[584452bf-d7c7-45b4-ba13-a8ad295e7848] received
+2026-05-04 19:15:00,020 INFO [operations.tasks] [request_id=-] operational checks completed without issues
+2026-05-04 19:15:00,020 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:15:00,021: INFO/ForkPoolWorker-8] Task operations.tasks.run_operational_checks_task[8026a2f9-dcae-40f4-a8b3-68219a652c49] succeeded in 0.015775465000842814s: {'issues': []}
+[2026-05-04 19:15:00,021: INFO/ForkPoolWorker-1] Task operations.tasks.dispatch_due_email_deliveries_task[584452bf-d7c7-45b4-ba13-a8ad295e7848] succeeded in 0.014529026999298367s: {'count': 0}
+[2026-05-04 19:16:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[7df9c42c-6472-400e-b15d-1c36cfdb0d4f] received
+2026-05-04 19:16:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:16:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[7df9c42c-6472-400e-b15d-1c36cfdb0d4f] succeeded in 0.011949586998525774s: {'count': 0}
+[2026-05-04 19:17:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[d0b3f296-11ef-4a3e-add8-c3ce374c1589] received
+2026-05-04 19:17:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 19:17:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[d0b3f296-11ef-4a3e-add8-c3ce374c1589] succeeded in 0.01403324300008535s: {'count': 0}
