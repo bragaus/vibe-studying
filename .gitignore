@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 .env
+.env.prod
+.env.docker.local
 venv/
 media/
 staticfiles/

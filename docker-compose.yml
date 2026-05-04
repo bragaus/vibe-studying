@@ -20,8 +20,6 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -34,6 +32,8 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
+    env_file:
+      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -50,7 +50,6 @@ services:
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
       ENABLE_PUBLIC_TEACHER_SIGNUP: "True"
-      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
@@ -97,6 +96,8 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
+    env_file:
+      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -109,7 +110,6 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
-      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
@@ -129,6 +129,8 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
+    env_file:
+      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -141,7 +143,6 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
-      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
