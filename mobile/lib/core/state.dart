@@ -69,7 +69,6 @@ final feedRepositoryProvider = Provider((ref) => FeedRepository(
       ref.watch(dioProvider),
       ref.watch(localStudyStorageProvider),
     ));
-final profilePhotoPathProvider = StateProvider<String?>((ref) => null);
 
 enum SessionStatus { initial, loading, authenticated, unauthenticated }
 
@@ -261,6 +260,10 @@ class ProfileController extends StateNotifier<AsyncValue<ProfileBundle?>> {
     );
     state = profile;
     return profile.requireValue;
+  }
+
+  void setBundle(ProfileBundle bundle) {
+    state = AsyncValue.data(bundle);
   }
 
   void clear() {

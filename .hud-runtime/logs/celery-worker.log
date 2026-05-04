@@ -1,10 +1,10 @@
  
  -------------- celery@bragaus-VJFE59F11X-B0821H v5.4.0 (opalescent)
 --- ***** ----- 
--- ******* ---- Linux-6.17.0-22-generic-x86_64-with-glibc2.39 2026-05-04 14:40:52
+-- ******* ---- Linux-6.17.0-22-generic-x86_64-with-glibc2.39 2026-05-04 17:05:09
 - *** --- * --- 
 - ** ---------- [config]
-- ** ---------- .> app:         vibe_studying_backend:0x751c8a65a900
+- ** ---------- .> app:         vibe_studying_backend:0x7a4800652990
 - ** ---------- .> transport:   redis://127.0.0.1:6379/0
 - ** ---------- .> results:     redis://127.0.0.1:6379/2
 - *** --- * --- .> concurrency: 12 (prefork)
@@ -21,109 +21,53 @@
   . operations.tasks.run_operational_checks_task
   . operations.tasks.schedule_inactivity_reminders_task
 
-[2026-05-04 14:40:52,801: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+[2026-05-04 17:05:10,289: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
 whether broker connection retries are made during startup in Celery 6.0 and above.
 If you wish to retain the existing behavior for retrying connections on startup,
 you should set broker_connection_retry_on_startup to True.
   warnings.warn(
 
-[2026-05-04 14:40:52,814: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
-[2026-05-04 14:40:52,815: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+[2026-05-04 17:05:10,296: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
+[2026-05-04 17:05:10,296: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
 whether broker connection retries are made during startup in Celery 6.0 and above.
 If you wish to retain the existing behavior for retrying connections on startup,
 you should set broker_connection_retry_on_startup to True.
   warnings.warn(
 
-[2026-05-04 14:40:52,817: INFO/MainProcess] mingle: searching for neighbors
-[2026-05-04 14:40:53,823: INFO/MainProcess] mingle: all alone
-[2026-05-04 14:40:53,830: INFO/MainProcess] celery@bragaus-VJFE59F11X-B0821H ready.
-[2026-05-04 14:40:53,833: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[3b0e758d-0435-4eaa-b086-4c87e3d76446] received
-2026-05-04 14:40:53,853 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 14:40:53,858: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[3b0e758d-0435-4eaa-b086-4c87e3d76446] succeeded in 0.024317163000887376s: {'count': 0}
-[2026-05-04 14:41:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[0ed0be53-7eec-4f8d-b2f0-07377011d302] received
-2026-05-04 14:41:00,028 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 14:41:00,029: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[0ed0be53-7eec-4f8d-b2f0-07377011d302] succeeded in 0.025938362001397763s: {'count': 0}
-[2026-05-04 14:42:00,002: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[fb004c84-c86b-4724-a248-b12d7af932cd] received
-2026-05-04 14:42:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 14:42:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[fb004c84-c86b-4724-a248-b12d7af932cd] succeeded in 0.011675813999318052s: {'count': 0}
-[2026-05-04 14:43:00,003: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[50256c1c-7408-4efd-9aff-437fc8bec990] received
-2026-05-04 14:43:00,015 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
-[2026-05-04 14:43:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[50256c1c-7408-4efd-9aff-437fc8bec990] succeeded in 0.012346344999969006s: {'count': 0}
-[2026-05-04 14:43:56,547: WARNING/MainProcess] consumer: Connection to broker lost. Trying to re-establish the connection...
-Traceback (most recent call last):
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py", line 340, in start
-    blueprint.start(self)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/bootsteps.py", line 116, in start
-    step.start(parent)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py", line 746, in start
-    c.loop(*c.loop_args())
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/loops.py", line 97, in asynloop
-    next(loop)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/asynchronous/hub.py", line 377, in create_loop
-    cb(*cbargs)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 1394, in on_readable
-    self.cycle.on_readable(fileno)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 579, in on_readable
-    chan.handlers[type]()
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 931, in _receive
-    ret.append(self._receive_one(c))
-               ^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/kombu/transport/redis.py", line 941, in _receive_one
-    response = c.parse_response()
-               ^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 865, in parse_response
-    response = self._execute(conn, try_read)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 841, in _execute
-    return conn.retry.call_with_retry(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 65, in call_with_retry
-    fail(error)
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 843, in <lambda>
-    lambda error: self._disconnect_raise_connect(conn, error),
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 830, in _disconnect_raise_connect
-    raise error
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 62, in call_with_retry
-    return do()
-           ^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 842, in <lambda>
-    lambda: command(*args, **kwargs),
-            ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 863, in try_read
-    return conn.read_response(disconnect_on_error=False, push_request=True)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/connection.py", line 592, in read_response
-    response = self._parser.read_response(disable_decoding=disable_decoding)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 15, in read_response
-    result = self._read_response(disable_decoding=disable_decoding)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 25, in _read_response
-    raw = self._buffer.readline()
-          ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py", line 115, in readline
-    self._read_from_socket()
-  File "/home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py", line 68, in _read_from_socket
-    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
-redis.exceptions.ConnectionError: Connection closed by server.
-[2026-05-04 14:43:56,627: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:391: CPendingDeprecationWarning: 
-In Celery 5.1 we introduced an optional breaking change which
-on connection loss cancels all currently executed tasks with late acknowledgement enabled.
-These tasks cannot be acknowledged as the connection is gone, and the tasks are automatically redelivered
-back to the queue. You can enable this behavior using the worker_cancel_long_running_tasks_on_connection_loss
-setting. In Celery 5.1 it is set to False by default. The setting will be set to True by default in Celery 6.0.
+[2026-05-04 17:05:10,298: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-04 17:05:11,302: INFO/MainProcess] mingle: all alone
+[2026-05-04 17:05:11,310: INFO/MainProcess] celery@bragaus-VJFE59F11X-B0821H ready.
+[2026-05-04 17:05:12,137: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[2bdabf36-3e0b-4510-91e5-a966462d28fb] received
+2026-05-04 17:05:12,152 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:05:12,154: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[2bdabf36-3e0b-4510-91e5-a966462d28fb] succeeded in 0.017018303000440937s: {'count': 0}
+[2026-05-04 17:06:00,008: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6437023b-15c7-46ec-a1e3-a7b31842138b] received
+2026-05-04 17:06:00,020 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:06:00,021: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6437023b-15c7-46ec-a1e3-a7b31842138b] succeeded in 0.01236127199990733s: {'count': 0}
+[2026-05-04 17:07:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[c7b3972a-8d46-4882-8e67-f9eb22f9048a] received
+2026-05-04 17:07:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:07:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[c7b3972a-8d46-4882-8e67-f9eb22f9048a] succeeded in 0.012009213000055752s: {'count': 0}
+[2026-05-04 17:08:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[da02ab82-bda0-46b2-a120-e65099ae12e8] received
+2026-05-04 17:08:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:08:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[da02ab82-bda0-46b2-a120-e65099ae12e8] succeeded in 0.011769230999561842s: {'count': 0}
+[2026-05-04 17:09:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[a1e27caa-402a-4498-8f26-46db0758ba73] received
+2026-05-04 17:09:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:09:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[a1e27caa-402a-4498-8f26-46db0758ba73] succeeded in 0.011780368000472663s: {'count': 0}
+[2026-05-04 17:10:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[500440ac-60ed-4b07-8012-983c006073e6] received
+2026-05-04 17:10:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:10:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[500440ac-60ed-4b07-8012-983c006073e6] succeeded in 0.012133752001318499s: {'count': 0}
+[2026-05-04 17:11:00,004: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[cc45127c-75c2-48d9-8696-cf24e0e94dc4] received
+2026-05-04 17:11:00,016 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:11:00,017: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[cc45127c-75c2-48d9-8696-cf24e0e94dc4] succeeded in 0.012311589000091772s: {'count': 0}
+[2026-05-04 17:12:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[6d16add1-587a-4fdb-b8e8-3e3f371e23cd] received
+2026-05-04 17:12:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:12:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[6d16add1-587a-4fdb-b8e8-3e3f371e23cd] succeeded in 0.012501250999775948s: {'count': 0}
+[2026-05-04 17:13:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[90714b04-f600-4071-920b-d013f7aba62f] received
+2026-05-04 17:13:00,013 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:13:00,014: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[90714b04-f600-4071-920b-d013f7aba62f] succeeded in 0.012128131000281428s: {'count': 0}
+[2026-05-04 17:14:00,001: INFO/MainProcess] Task operations.tasks.dispatch_due_email_deliveries_task[18d6bd51-90eb-437b-aa7f-9e5b28a4827a] received
+2026-05-04 17:14:00,014 INFO [operations.tasks] [request_id=-] dispatched due email deliveries
+[2026-05-04 17:14:00,015: INFO/ForkPoolWorker-8] Task operations.tasks.dispatch_due_email_deliveries_task[18d6bd51-90eb-437b-aa7f-9e5b28a4827a] succeeded in 0.012726344999464345s: {'count': 0}
 
-  warnings.warn(CANCEL_TASKS_BY_DEFAULT, CPendingDeprecationWarning)
-
-[2026-05-04 14:43:56,694: WARNING/MainProcess] /home/bragaus/Documentos/vibe-studying-backend/backend/.venv/lib/python3.12/site-packages/celery/worker/consumer/consumer.py:508: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
-whether broker connection retries are made during startup in Celery 6.0 and above.
-If you wish to retain the existing behavior for retrying connections on startup,
-you should set broker_connection_retry_on_startup to True.
-  warnings.warn(
-
-[2026-05-04 14:43:56,704: ERROR/MainProcess] consumer: Cannot connect to redis://127.0.0.1:6379/0: Error 111 connecting to 127.0.0.1:6379. Connection refused..
-Trying again in 2.00 seconds... (1/100)
-
+worker: Hitting Ctrl+C again will terminate all running tasks!
 
 worker: Warm shutdown (MainProcess)

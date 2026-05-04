@@ -5,6 +5,7 @@ class AppUser {
     required this.firstName,
     required this.lastName,
     required this.role,
+    required this.avatarUrl,
   });
 
   final int id;
@@ -12,6 +13,7 @@ class AppUser {
   final String firstName;
   final String lastName;
   final String role;
+  final String avatarUrl;
 
   String get displayName {
     final fullName = '$firstName $lastName'.trim();
@@ -25,6 +27,7 @@ class AppUser {
       firstName: (json['first_name'] ?? '') as String,
       lastName: (json['last_name'] ?? '') as String,
       role: json['role'] as String,
+      avatarUrl: (json['avatar_url'] ?? '') as String,
     );
   }
 
@@ -35,6 +38,7 @@ class AppUser {
       'first_name': firstName,
       'last_name': lastName,
       'role': role,
+      'avatar_url': avatarUrl,
     };
   }
 }
@@ -71,6 +75,11 @@ class StudentProfile {
   const StudentProfile({
     required this.onboardingCompleted,
     required this.englishLevel,
+    required this.bio,
+    required this.avatarUrl,
+    required this.postsCount,
+    required this.energyReceivedCount,
+    required this.commentsReceivedCount,
     required this.favoriteSongs,
     required this.favoriteMovies,
     required this.favoriteSeries,
@@ -81,6 +90,11 @@ class StudentProfile {
 
   final bool onboardingCompleted;
   final String englishLevel;
+  final String bio;
+  final String avatarUrl;
+  final int postsCount;
+  final int energyReceivedCount;
+  final int commentsReceivedCount;
   final List<String> favoriteSongs;
   final List<String> favoriteMovies;
   final List<String> favoriteSeries;
@@ -95,6 +109,11 @@ class StudentProfile {
     return StudentProfile(
       onboardingCompleted: (json['onboarding_completed'] ?? false) as bool,
       englishLevel: (json['english_level'] ?? 'beginner') as String,
+      bio: (json['bio'] ?? '') as String,
+      avatarUrl: (json['avatar_url'] ?? '') as String,
+      postsCount: (json['posts_count'] ?? 0) as int,
+      energyReceivedCount: (json['energy_received_count'] ?? 0) as int,
+      commentsReceivedCount: (json['comments_received_count'] ?? 0) as int,
       favoriteSongs: asStringList('favorite_songs'),
       favoriteMovies: asStringList('favorite_movies'),
       favoriteSeries: asStringList('favorite_series'),
@@ -108,6 +127,11 @@ class StudentProfile {
     return {
       'onboarding_completed': onboardingCompleted,
       'english_level': englishLevel,
+      'bio': bio,
+      'avatar_url': avatarUrl,
+      'posts_count': postsCount,
+      'energy_received_count': energyReceivedCount,
+      'comments_received_count': commentsReceivedCount,
       'favorite_songs': favoriteSongs,
       'favorite_movies': favoriteMovies,
       'favorite_series': favoriteSeries,
@@ -135,6 +159,141 @@ class ProfileBundle {
     return {
       'user': user.toJson(),
       'profile': profile.toJson(),
+    };
+  }
+}
+
+class StudentIdentity {
+  const StudentIdentity({
+    required this.id,
+    required this.displayName,
+    required this.role,
+    required this.avatarUrl,
+    required this.bio,
+  });
+
+  final int id;
+  final String displayName;
+  final String role;
+  final String avatarUrl;
+  final String bio;
+
+  factory StudentIdentity.fromJson(Map<String, dynamic> json) {
+    return StudentIdentity(
+      id: json['id'] as int,
+      displayName: (json['display_name'] ?? '') as String,
+      role: (json['role'] ?? 'student') as String,
+      avatarUrl: (json['avatar_url'] ?? '') as String,
+      bio: (json['bio'] ?? '') as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'display_name': displayName,
+      'role': role,
+      'avatar_url': avatarUrl,
+      'bio': bio,
+    };
+  }
+}
+
+class StudentPostComment {
+  const StudentPostComment({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isOwner,
+    required this.author,
+  });
+
+  final int id;
+  final String content;
+  final String createdAt;
+  final String updatedAt;
+  final bool isOwner;
+  final StudentIdentity author;
+
+  factory StudentPostComment.fromJson(Map<String, dynamic> json) {
+    return StudentPostComment(
+      id: json['id'] as int,
+      content: (json['content'] ?? '') as String,
+      createdAt: (json['created_at'] ?? '') as String,
+      updatedAt: (json['updated_at'] ?? '') as String,
+      isOwner: (json['is_owner'] ?? false) as bool,
+      author: StudentIdentity.fromJson(json['author'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'content': content,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'is_owner': isOwner,
+      'author': author.toJson(),
+    };
+  }
+}
+
+class StudentPost {
+  const StudentPost({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isOwner,
+    required this.energyCount,
+    required this.commentCount,
+    required this.energizedByMe,
+    required this.author,
+    required this.comments,
+  });
+
+  final int id;
+  final String content;
+  final String createdAt;
+  final String updatedAt;
+  final bool isOwner;
+  final int energyCount;
+  final int commentCount;
+  final bool energizedByMe;
+  final StudentIdentity author;
+  final List<StudentPostComment> comments;
+
+  factory StudentPost.fromJson(Map<String, dynamic> json) {
+    return StudentPost(
+      id: json['id'] as int,
+      content: (json['content'] ?? '') as String,
+      createdAt: (json['created_at'] ?? '') as String,
+      updatedAt: (json['updated_at'] ?? '') as String,
+      isOwner: (json['is_owner'] ?? false) as bool,
+      energyCount: (json['energy_count'] ?? 0) as int,
+      commentCount: (json['comment_count'] ?? 0) as int,
+      energizedByMe: (json['energized_by_me'] ?? false) as bool,
+      author: StudentIdentity.fromJson(json['author'] as Map<String, dynamic>),
+      comments: ((json['comments'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>())
+          .map(StudentPostComment.fromJson)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'content': content,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'is_owner': isOwner,
+      'energy_count': energyCount,
+      'comment_count': commentCount,
+      'energized_by_me': energizedByMe,
+      'author': author.toJson(),
+      'comments': comments.map((item) => item.toJson()).toList(),
     };
   }
 }

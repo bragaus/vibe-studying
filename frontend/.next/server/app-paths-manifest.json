@@ -1,8 +1,5 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/health/route": "app/health/route.js",
-  "/portal/page": "app/portal/page.js",
-  "/viberstudant/page": "app/viberstudant/page.js",
+  "/page": "app/page.js",
   "/auth/page": "app/auth/page.js",
-  "/page": "app/page.js"
+  "/viberstudant/page": "app/viberstudant/page.js"
 }

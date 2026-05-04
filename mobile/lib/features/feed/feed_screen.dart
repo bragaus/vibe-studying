@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,8 +22,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   Timer? _bootstrapPollTimer;
   bool _attemptedBootstrapRecovery = false;
 
-  static final Uri _studentProfileUri =
-      Uri.parse('https://vibestudying.com/viberstudant');
   static final Uri _projectGithubUri =
       Uri.parse('https://github.com/bragaus/vibe-studying');
 
@@ -77,28 +73,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     }
   }
 
-  Future<void> _pickProfilePhoto(BuildContext context, WidgetRef ref) async {
-    const imageGroup =
-        XTypeGroup(label: 'images', extensions: ['jpg', 'jpeg', 'png', 'webp']);
-
-    try {
-      final file = await openFile(acceptedTypeGroups: const [imageGroup]);
-      if (file == null) {
-        return;
-      }
-
-      ref.read(profilePhotoPathProvider.notifier).state = file.path;
-    } catch (_) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Nao foi possivel abrir o seletor de imagem.')),
-      );
-    }
-  }
-
   Future<void> _openExternalUrl(
     BuildContext context,
     Uri uri,
@@ -114,14 +88,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(errorMessage)),
-    );
-  }
-
-  Future<void> _openStudentProfile(BuildContext context) {
-    return _openExternalUrl(
-      context,
-      _studentProfileUri,
-      'Nao foi possivel abrir o perfil do aluno.',
     );
   }
 
@@ -148,6 +114,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   ) async {
     switch (action) {
       case _HeaderMenuAction.settings:
+        context.push('/student-hub');
         return;
       case _HeaderMenuAction.github:
         await _openProjectGithub(context);
@@ -161,7 +128,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final sessionState = ref.watch(sessionControllerProvider);
-    final profilePhotoPath = ref.watch(profilePhotoPathProvider);
+    final profileAsync = ref.watch(profileControllerProvider);
     final bootstrapStatusAsync = ref.watch(feedBootstrapStatusProvider);
 
     if (!sessionState.isAuthenticated) {
@@ -171,6 +138,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     final session = sessionState.session!;
     final feedAsync = ref.watch(personalizedFeedProvider);
+    final profileBundle = profileAsync.valueOrNull;
+    final avatarUrl = profileBundle?.profile.avatarUrl.isNotEmpty == true
+        ? profileBundle!.profile.avatarUrl
+        : (profileBundle?.user.avatarUrl ?? session.user.avatarUrl);
+    final avatarLabel =
+        profileBundle?.user.displayName ?? session.user.displayName;
 
     return HudScaffold(
       child: Column(
@@ -211,9 +184,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             ],
             actions: [
               _ProfilePhotoButton(
-                imagePath: profilePhotoPath,
-                onAvatarPressed: () => _openStudentProfile(context),
-                onAddPressed: () => _pickProfilePhoto(context, ref),
+                imageUrl: avatarUrl,
+                label: avatarLabel,
+                onPressed: () => context.push('/student-hub'),
               ),
             ],
           ),
@@ -413,68 +386,65 @@ class _BootstrapStatusBanner extends StatelessWidget {
 
 class _ProfilePhotoButton extends StatelessWidget {
   const _ProfilePhotoButton({
-    required this.imagePath,
-    required this.onAvatarPressed,
-    required this.onAddPressed,
+    required this.imageUrl,
+    required this.label,
+    required this.onPressed,
   });
 
-  final String? imagePath;
-  final VoidCallback onAvatarPressed;
-  final VoidCallback onAddPressed;
+  final String imageUrl;
+  final String label;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Tooltip(
-          message: 'Abrir perfil do aluno',
-          child: GestureDetector(
-            onTap: onAvatarPressed,
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: AppPalette.neonCyan.withValues(alpha: 0.75)),
-                color: AppPalette.panel,
-              ),
-              child: ClipOval(
-                child: imagePath == null
-                    ? const Icon(Icons.person, color: AppPalette.foreground)
-                    : Image.file(
-                        File(imagePath!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.person,
-                            color: AppPalette.foreground),
-                      ),
-              ),
+    final initials = label
+        .split(' ')
+        .where((item) => item.trim().isNotEmpty)
+        .take(2)
+        .map((item) => item[0].toUpperCase())
+        .join();
+
+    return Tooltip(
+      message: 'Abrir perfil do aluno',
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppPalette.neonCyan.withValues(alpha: 0.75),
             ),
+            color: AppPalette.panel,
+          ),
+          child: ClipOval(
+            child: imageUrl.trim().isEmpty
+                ? Center(
+                    child: Text(
+                      initials.isEmpty ? 'VS' : initials,
+                      style: const TextStyle(
+                        color: AppPalette.foreground,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                : Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(
+                        initials.isEmpty ? 'VS' : initials,
+                        style: const TextStyle(
+                          color: AppPalette.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ),
-        if (imagePath == null)
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Tooltip(
-              message: 'Escolher foto do perfil',
-              child: GestureDetector(
-                onTap: onAddPressed,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppPalette.neonPink,
-                  ),
-                  child: const Icon(Icons.add,
-                      size: 12, color: AppPalette.background),
-                ),
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }

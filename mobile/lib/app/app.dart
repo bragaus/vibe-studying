@@ -5,6 +5,7 @@ import 'package:vibe_studying_mobile/features/auth/auth_screens.dart';
 import 'package:vibe_studying_mobile/features/feed/feed_bootstrap_screen.dart';
 import 'package:vibe_studying_mobile/features/feed/feed_screen.dart';
 import 'package:vibe_studying_mobile/features/onboarding/onboarding_screen.dart';
+import 'package:vibe_studying_mobile/features/profile/student_hub_screen.dart';
 import 'package:vibe_studying_mobile/features/practice/practice_screen.dart';
 
 class VibeStudyingApp extends StatelessWidget {
@@ -29,6 +30,10 @@ class VibeStudyingApp extends StatelessWidget {
           builder: (context, state) => const FeedBootstrapScreen(),
         ),
         GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
+        GoRoute(
+          path: '/student-hub',
+          builder: (context, state) => const StudentHubScreen(),
+        ),
         GoRoute(
           path: '/practice/:slug',
           builder: (context, state) =>

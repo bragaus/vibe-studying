@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:vibe_studying_mobile/app/theme.dart';
 import 'package:vibe_studying_mobile/core/models.dart';
 import 'package:vibe_studying_mobile/core/repositories.dart';
@@ -24,11 +22,12 @@ class PracticeScreen extends ConsumerStatefulWidget {
 }
 
 class _PracticeScreenState extends ConsumerState<PracticeScreen> {
-  static final Uri _studentProfileUri =
-      Uri.parse('https://vibestudying.com/viberstudant');
+  static const double _musicViewportHeight = 420;
+  static const double _musicItemExtent = 92;
 
   final stt.SpeechToText _speech = stt.SpeechToText();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final ScrollController _musicScrollController = ScrollController();
   final List<PracticeLineResult> _results = [];
 
   Timer? _laneTimer;
@@ -43,11 +42,13 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   bool _audioPlaying = false;
   bool _audioPluginAvailable = true;
   bool _speechReady = false;
+  bool _musicScrollSyncQueued = false;
   double _laneProgress = 0;
   double _speedMultiplier = 1;
   int _currentLineIndex = 0;
   int _currentPlaylistIndex = 0;
   int _lastSettledLineIndex = -1;
+  int _lastVisualProgressMs = -1;
   int _globalPlaybackMs = 0;
   String _recognizedText = '';
   String _coachMessage = '';
@@ -60,6 +61,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     _audioPositionSubscription?.cancel();
     _audioIndexSubscription?.cancel();
     _audioStateSubscription?.cancel();
+    _musicScrollController.dispose();
     unawaited(_safeStopSpeech());
     unawaited(_safeDisposeAudioPlayer());
     super.dispose();
@@ -96,22 +98,14 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     }
   }
 
-  Future<void> _openStudentProfile(BuildContext context) async {
-    final opened = await launchUrl(
-      _studentProfileUri,
-      mode: LaunchMode.externalApplication,
-    );
-    if (opened || !context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Nao foi possivel abrir o perfil do aluno.')),
-    );
-  }
-
   bool _isMusicLesson(LessonDetail lesson) => lesson.contentType == 'music';
+
+  double get _musicTopPadding =>
+      (_musicViewportHeight * 0.28).clamp(96.0, 160.0);
+
+  double get _musicBottomPadding =>
+      (_musicViewportHeight - _musicTopPadding - _musicItemExtent)
+          .clamp(96.0, 220.0);
 
   List<MediaPlaylistItem> _playlistForLesson(LessonDetail lesson) {
     final manifest = lesson.mediaManifest;
@@ -161,12 +155,57 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         _resolveCurrentLineIndex(lesson.exercise.lines, globalPlaybackMs);
     final speedEveryMs = lesson.mediaManifest?.speedUpEveryMs ?? 30000;
     final speedTier = speedEveryMs <= 0 ? 0 : globalPlaybackMs ~/ speedEveryMs;
+    final nextSpeedMultiplier = 1 + (speedTier * 0.18);
+    final shouldRefreshVisuals = currentLineIndex != _currentLineIndex ||
+        (nextSpeedMultiplier - _speedMultiplier).abs() >= 0.01 ||
+        (globalPlaybackMs - _lastVisualProgressMs).abs() >= 40;
+
+    _globalPlaybackMs = globalPlaybackMs;
+    if (!shouldRefreshVisuals) {
+      _scheduleMusicLaneScrollSync(lesson);
+      return;
+    }
+
+    _lastVisualProgressMs = globalPlaybackMs;
 
     setState(() {
       _globalPlaybackMs = globalPlaybackMs;
       _currentLineIndex = currentLineIndex;
-      _speedMultiplier = 1 + (speedTier * 0.18);
+      _speedMultiplier = nextSpeedMultiplier;
     });
+    _scheduleMusicLaneScrollSync(lesson);
+  }
+
+  void _scheduleMusicLaneScrollSync(LessonDetail lesson) {
+    if (_musicScrollSyncQueued || !_isMusicLesson(lesson)) {
+      return;
+    }
+
+    _musicScrollSyncQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _musicScrollSyncQueued = false;
+      if (!mounted) {
+        return;
+      }
+      _syncMusicLaneScroll(lesson);
+    });
+  }
+
+  void _syncMusicLaneScroll(LessonDetail lesson) {
+    if (!_musicScrollController.hasClients || lesson.exercise.lines.isEmpty) {
+      return;
+    }
+
+    final targetOffset = _musicScrollOffset(lesson, _musicItemExtent).clamp(
+      0.0,
+      _musicScrollController.position.maxScrollExtent,
+    );
+
+    if ((targetOffset - _musicScrollController.offset).abs() < 1) {
+      return;
+    }
+
+    _musicScrollController.jumpTo(targetOffset);
   }
 
   void _startFallbackPlayback(LessonDetail lesson, {int startMs = 0}) {
@@ -211,11 +250,13 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       _currentLineIndex = 0;
       _currentPlaylistIndex = 0;
       _lastSettledLineIndex = -1;
+      _lastVisualProgressMs = -1;
       _globalPlaybackMs = 0;
       _recognizedText = '';
       _coachMessage = '';
       _isListening = false;
     });
+    _scheduleMusicLaneScrollSync(lesson);
 
     if (_isMusicLesson(lesson)) {
       final prepared = await _prepareMusicPlayer(lesson);
@@ -583,6 +624,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         await _audioPlayer.seek(Duration(milliseconds: localPositionMs),
             index: index);
         setState(() => _currentPlaylistIndex = index);
+        _scheduleMusicLaneScrollSync(lesson);
         return;
       }
     }
@@ -946,17 +988,31 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       height: 1.05,
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(line.textEn, style: originalStyle),
-          if (line.textPt.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(line.textPt, style: translationStyle),
+    return SizedBox(
+      height: _musicItemExtent,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              line.textEn,
+              style: originalStyle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (line.textPt.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                line.textPt,
+                style: translationStyle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -967,12 +1023,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       return const Text('Essa lesson ainda nao possui linhas musicais.');
     }
 
-    const viewportHeight = 420.0;
-    const itemExtent = 92.0;
     final activeIndex = _currentLineIndex.clamp(0, lines.length - 1);
-    final scrollOffset = _musicScrollOffset(lesson, itemExtent);
-    final topPadding = (viewportHeight * 0.28).clamp(96.0, 160.0);
-    final contentHeight = (lines.length * itemExtent) + 220;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -983,7 +1034,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         ),
         const SizedBox(height: 16),
         Container(
-          height: viewportHeight,
+          height: _musicViewportHeight,
           decoration: BoxDecoration(
             color: AppPalette.panelSoft,
             borderRadius: BorderRadius.circular(18),
@@ -991,78 +1042,72 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppPalette.panel.withValues(alpha: 0.98),
-                          AppPalette.panelSoft.withValues(alpha: 0.94),
-                          AppPalette.panel.withValues(alpha: 0.98),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: IgnorePointer(
+            child: RepaintBoundary(
+              child: Stack(
+                children: [
+                  Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            AppPalette.background.withValues(alpha: 0.92),
-                            Colors.transparent,
-                            Colors.transparent,
-                            AppPalette.background.withValues(alpha: 0.92),
+                            AppPalette.panel.withValues(alpha: 0.98),
+                            AppPalette.panelSoft.withValues(alpha: 0.94),
+                            AppPalette.panel.withValues(alpha: 0.98),
                           ],
-                          stops: const [0, 0.14, 0.82, 1],
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 18,
-                  right: 18,
-                  top: topPadding - 14,
-                  child: Container(
-                    height: 2,
-                    color: AppPalette.neonCyan.withValues(alpha: 0.82),
+                  Positioned.fill(
+                    child: ListView.builder(
+                      controller: _musicScrollController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        22,
+                        _musicTopPadding,
+                        22,
+                        _musicBottomPadding,
+                      ),
+                      itemCount: lines.length,
+                      itemBuilder: (context, index) => _buildMusicLyricBlock(
+                        lines[index],
+                        index,
+                        activeIndex,
+                      ),
+                    ),
                   ),
-                ),
-                Positioned.fill(
-                  child: OverflowBox(
-                    alignment: Alignment.topLeft,
-                    minHeight: 0,
-                    maxHeight: double.infinity,
-                    child: Transform.translate(
-                      offset: Offset(0, topPadding - scrollOffset),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: contentHeight,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 0, 22, 40),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (var index = 0; index < lines.length; index++)
-                                _buildMusicLyricBlock(
-                                    lines[index], index, activeIndex),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppPalette.background.withValues(alpha: 0.92),
+                              Colors.transparent,
+                              Colors.transparent,
+                              AppPalette.background.withValues(alpha: 0.92),
                             ],
+                            stops: const [0, 0.14, 0.82, 1],
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    left: 18,
+                    right: 18,
+                    top: _musicTopPadding - 14,
+                    child: Container(
+                      height: 2,
+                      color: AppPalette.neonCyan.withValues(alpha: 0.82),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1201,7 +1246,19 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   @override
   Widget build(BuildContext context) {
     final lessonAsync = ref.watch(lessonDetailProvider(widget.lessonSlug));
-    final profilePhotoPath = ref.watch(profilePhotoPathProvider);
+    final session = ref.watch(sessionControllerProvider).session;
+    final profileBundle = ref.watch(profileControllerProvider).valueOrNull;
+    final avatarUrl = profileBundle?.profile.avatarUrl.isNotEmpty == true
+        ? profileBundle!.profile.avatarUrl
+        : (profileBundle?.user.avatarUrl ?? session?.user.avatarUrl ?? '');
+    final avatarLabel =
+        profileBundle?.user.displayName ?? session?.user.displayName ?? 'VS';
+    final initials = avatarLabel
+        .split(' ')
+        .where((item) => item.trim().isNotEmpty)
+        .take(2)
+        .map((item) => item[0].toUpperCase())
+        .join();
 
     return HudScaffold(
       title: 'PRACTICE_HUD',
@@ -1219,7 +1276,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       ],
       actions: [
         GestureDetector(
-          onTap: () => _openStudentProfile(context),
+          onTap: () => context.push('/student-hub'),
           child: Container(
             width: 40,
             height: 40,
@@ -1231,13 +1288,28 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               color: AppPalette.panel,
             ),
             child: ClipOval(
-              child: profilePhotoPath == null
-                  ? const Icon(Icons.person, color: AppPalette.foreground)
-                  : Image.file(
-                      File(profilePhotoPath),
+              child: avatarUrl.trim().isEmpty
+                  ? Center(
+                      child: Text(
+                        initials.isEmpty ? 'VS' : initials,
+                        style: const TextStyle(
+                          color: AppPalette.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    )
+                  : Image.network(
+                      avatarUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.person,
-                          color: AppPalette.foreground),
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(
+                          initials.isEmpty ? 'VS' : initials,
+                          style: const TextStyle(
+                            color: AppPalette.foreground,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -227,6 +228,37 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+Map<String, dynamic> _readJsonMap(Response<dynamic> response) {
+  final data = response.data;
+  if (data is Map<String, dynamic>) {
+    return data;
+  }
+  throw const ApiException('Resposta invalida do backend.');
+}
+
+List<Map<String, dynamic>> _readJsonList(Response<dynamic> response) {
+  final data = response.data;
+  if (data is! List) {
+    throw const ApiException('Resposta invalida do backend.');
+  }
+
+  return data.whereType<Map<String, dynamic>>().toList();
+}
+
+MediaType _avatarMediaTypeForFileName(String fileName) {
+  final normalized = fileName.toLowerCase();
+  if (normalized.endsWith('.png')) {
+    return MediaType('image', 'png');
+  }
+  if (normalized.endsWith('.webp')) {
+    return MediaType('image', 'webp');
+  }
+  if (normalized.endsWith('.jpg') || normalized.endsWith('.jpeg')) {
+    return MediaType('image', 'jpeg');
+  }
+  return MediaType('image', 'png');
+}
+
 bool isLikelyOfflineError(Object error) {
   if (error is! DioException) {
     return false;
@@ -293,15 +325,20 @@ class ProfileRepository {
   final Dio _dio;
   final LocalStudyStorage _storage;
 
+  Future<ProfileBundle> _persistProfileResponse(
+      Response<dynamic> response) async {
+    final bundle = ProfileBundle.fromJson(_readJsonMap(response));
+    await _storage.saveProfile(bundle);
+    return bundle;
+  }
+
   Future<ProfileBundle> getMyProfile(String accessToken) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
+      final response = await _dio.get<dynamic>(
         '/profile/me',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
-      final bundle = ProfileBundle.fromJson(response.data!);
-      await _storage.saveProfile(bundle);
-      return bundle;
+      return _persistProfileResponse(response);
     } catch (error) {
       final cachedBundle = await _storage.readProfile();
       if (cachedBundle != null && isLikelyOfflineError(error)) {
@@ -321,7 +358,7 @@ class ProfileRepository {
     required List<String> favoriteArtists,
     required List<String> favoriteGenres,
   }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
+    final response = await _dio.post<dynamic>(
       '/profile/onboarding',
       data: {
         'english_level': englishLevel,
@@ -334,9 +371,143 @@ class ProfileRepository {
       },
       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
     );
-    final bundle = ProfileBundle.fromJson(response.data!);
-    await _storage.saveProfile(bundle);
-    return bundle;
+    return _persistProfileResponse(response);
+  }
+
+  Future<ProfileBundle> updateMyProfile({
+    required String accessToken,
+    required String englishLevel,
+    required String bio,
+    required List<String> favoriteSongs,
+    required List<String> favoriteMovies,
+    required List<String> favoriteSeries,
+    required List<String> favoriteAnime,
+    required List<String> favoriteArtists,
+    required List<String> favoriteGenres,
+  }) async {
+    final response = await _dio.put<dynamic>(
+      '/profile/me',
+      data: {
+        'english_level': englishLevel,
+        'bio': bio,
+        'favorite_songs': favoriteSongs,
+        'favorite_movies': favoriteMovies,
+        'favorite_series': favoriteSeries,
+        'favorite_anime': favoriteAnime,
+        'favorite_artists': favoriteArtists,
+        'favorite_genres': favoriteGenres,
+      },
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return _persistProfileResponse(response);
+  }
+
+  Future<ProfileBundle> uploadAvatar({
+    required String accessToken,
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/profile/me/avatar',
+      data: FormData.fromMap({
+        'avatar': MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+          contentType: _avatarMediaTypeForFileName(fileName),
+        ),
+      }),
+      options: Options(
+        headers: {'Authorization': 'Bearer $accessToken'},
+        contentType: 'multipart/form-data',
+      ),
+    );
+    return _persistProfileResponse(response);
+  }
+
+  Future<ProfileBundle> deleteAvatar(String accessToken) async {
+    final response = await _dio.delete<dynamic>(
+      '/profile/me/avatar',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return _persistProfileResponse(response);
+  }
+
+  Future<List<StudentPost>> getStudentPosts(String accessToken) async {
+    final response = await _dio.get<dynamic>(
+      '/profile/posts',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return _readJsonList(response).map(StudentPost.fromJson).toList();
+  }
+
+  Future<StudentPost> createStudentPost({
+    required String accessToken,
+    required String content,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/profile/posts',
+      data: {'content': content},
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return StudentPost.fromJson(_readJsonMap(response));
+  }
+
+  Future<StudentPost> updateStudentPost({
+    required String accessToken,
+    required int postId,
+    required String content,
+  }) async {
+    final response = await _dio.patch<dynamic>(
+      '/profile/posts/$postId',
+      data: {'content': content},
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return StudentPost.fromJson(_readJsonMap(response));
+  }
+
+  Future<void> deleteStudentPost({
+    required String accessToken,
+    required int postId,
+  }) async {
+    await _dio.delete<dynamic>(
+      '/profile/posts/$postId',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+  }
+
+  Future<StudentPost> energizeStudentPost({
+    required String accessToken,
+    required int postId,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/profile/posts/$postId/energy',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return StudentPost.fromJson(_readJsonMap(response));
+  }
+
+  Future<StudentPost> removeEnergyFromStudentPost({
+    required String accessToken,
+    required int postId,
+  }) async {
+    final response = await _dio.delete<dynamic>(
+      '/profile/posts/$postId/energy',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return StudentPost.fromJson(_readJsonMap(response));
+  }
+
+  Future<StudentPost> createStudentPostComment({
+    required String accessToken,
+    required int postId,
+    required String content,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/profile/posts/$postId/comments',
+      data: {'content': content},
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return StudentPost.fromJson(_readJsonMap(response));
   }
 }
 
