@@ -32,8 +32,6 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    env_file:
-      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -50,6 +48,16 @@ services:
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
       ENABLE_PUBLIC_TEACHER_SIGNUP: "True"
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@vibestudying.local}
+      SERVER_EMAIL: ${SERVER_EMAIL:-noreply@vibestudying.local}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-10}
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL:-False}
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
@@ -96,8 +104,6 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    env_file:
-      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -110,6 +116,16 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@vibestudying.local}
+      SERVER_EMAIL: ${SERVER_EMAIL:-noreply@vibestudying.local}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-10}
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL:-False}
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
@@ -129,8 +145,6 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    env_file:
-      - ./.env.docker.local
     environment:
       DEBUG: "True"
       SECRET_KEY: ${SECRET_KEY:-change-me-local}
@@ -143,6 +157,16 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       DATABASE_HOST: db
       DATABASE_PORT: "5432"
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@vibestudying.local}
+      SERVER_EMAIL: ${SERVER_EMAIL:-noreply@vibestudying.local}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-10}
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL:-False}
       PUBLIC_WEB_URL: http://127.0.0.1:8080
       RUNTIME_ENVIRONMENT: docker-local
       REDIS_URL: redis://redis:6379/0
