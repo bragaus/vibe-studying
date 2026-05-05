@@ -58,10 +58,7 @@ DEBUG=True
 SECRET_KEY=change-me
 PUBLIC_API_HOST=127.0.0.1
 PUBLIC_API_ORIGIN=http://127.0.0.1:8000
-ALLOWED_HOSTS=127.0.0.1,localhost,testserver
 CORS_ALLOW_ALL_ORIGINS=True
-CORS_ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
-CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
 DATABASE_NAME=vibe_studying
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
@@ -69,7 +66,7 @@ DATABASE_HOST=127.0.0.1
 DATABASE_PORT=5432
 JWT_SECRET_KEY=change-me-too
 ENABLE_PUBLIC_TEACHER_SIGNUP=True
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_BACKEND=
 DEFAULT_FROM_EMAIL=noreply@vibestudying.local
 SERVER_EMAIL=noreply@vibestudying.local
 PUBLIC_WEB_URL=http://localhost:8080
@@ -96,8 +93,10 @@ CELERY_RESULT_BACKEND=cache+memory://
 | `DATABASE_HOST` | sim | host do banco |
 | `DATABASE_PORT` | sim | porta do banco |
 | `JWT_SECRET_KEY` | sim | assinatura dos tokens JWT |
-| `CORS_ALLOWED_ORIGINS` | recomendado | origens permitidas do frontend |
-| `CSRF_TRUSTED_ORIGINS` | recomendado | origens confiaveis para CSRF |
+| `PUBLIC_API_ORIGIN` | recomendado | origem publica do backend para callbacks, health e hosts derivados |
+| `PUBLIC_WEB_URL` | recomendado | origem publica do frontend para links, CORS e CSRF derivados |
+| `CORS_ALLOWED_ORIGINS` | opcional | sobrescreve as origens derivadas do frontend/backend |
+| `CSRF_TRUSTED_ORIGINS` | opcional | sobrescreve as origens derivadas do frontend/backend |
 | `ENABLE_PUBLIC_TEACHER_SIGNUP` | recomendado | libera ou fecha signup publico de professor |
 | `AI_CURATOR_EMAIL` | recomendado | conta tecnica dona das lessons geradas por IA |
 | `SEARXNG_BASE_URL` | recomendado | endpoint HTTP do buscador SearXNG |
@@ -116,7 +115,15 @@ Modo minimo local:
 - deixe `REDIS_URL` vazio
 - use `CELERY_BROKER_URL=memory://`
 - use `CELERY_RESULT_BACKEND=cache+memory://`
-- `EMAIL_BACKEND` pode ficar no console
+- deixe `EMAIL_BACKEND` vazio para modo automatico
+- sem credenciais SMTP, o backend cai no console
+- com `EMAIL_HOST_USER` e `EMAIL_HOST_PASSWORD`, o backend usa SMTP real
+
+Hosts e origens:
+
+- `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` podem ser omitidos
+- quando omitidos, o backend deriva esses valores a partir de `PUBLIC_API_ORIGIN` e `PUBLIC_WEB_URL`
+- se precisar de excecoes especificas, defina as listas manualmente nas variaveis de ambiente
 
 Modo completo local:
 

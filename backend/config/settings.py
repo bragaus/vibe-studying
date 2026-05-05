@@ -11,6 +11,7 @@ Obs: O frontend nunca toca neste arquivo.
 
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from celery.schedules import crontab
 from dotenv import load_dotenv
@@ -21,29 +22,104 @@ load_dotenv(BASE_DIR / ".env")
 def env_bool(name: str, default: bool = False) -> bool:
     """Converte uma variavel de ambiente para bool."""
     value = os.getenv(name)
-    if value is None:
+    if value is None or not value.strip():
         return default
     return value.lower() in {"1", "true", "yes", "on"}
 
 
 def env_list(name: str, default: str = "") -> list[str]:
     """Converte uma lista separada por virgula em lista Python."""
-    raw_value = os.getenv(name, default)
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        raw_value = default
     return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
+def env_str(name: str, default: str = "") -> str:
+    """Lê uma string do ambiente tratando valor vazio como ausente."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    value = value.strip()
+    return value if value else default
+
+
+def dedupe_items(values: list[str]) -> list[str]:
+    unique_values: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        normalized_value = value.strip()
+        if not normalized_value or normalized_value in seen:
+            continue
+        seen.add(normalized_value)
+        unique_values.append(normalized_value)
+    return unique_values
+
+
+def extract_hostname(value: str) -> str:
+    if not value:
+        return ""
+
+    candidate = value.strip()
+    parsed = urlsplit(candidate if "://" in candidate else f"https://{candidate}")
+    return parsed.hostname or ""
+
+
+def normalize_origin(value: str) -> str:
+    return value.strip().rstrip("/")
+
+
+def build_default_allowed_hosts(*, public_api_host: str, public_api_origin: str, public_web_url: str, local_hosts: list[str]) -> list[str]:
+    return dedupe_items([
+        public_api_host,
+        extract_hostname(public_api_origin),
+        extract_hostname(public_web_url),
+        *local_hosts,
+    ])
+
+
+def build_default_trusted_origins(*, public_api_origin: str, public_web_url: str, include_local_origins: bool, local_origins: list[str]) -> list[str]:
+    return dedupe_items([
+        public_api_origin,
+        public_web_url,
+        *(local_origins if include_local_origins else []),
+    ])
+
+
+def resolve_email_backend(*, configured_backend: str, email_host_user: str, email_host_password: str) -> str:
+    if configured_backend:
+        return configured_backend
+    if email_host_user and email_host_password:
+        return 'django.core.mail.backends.smtp.EmailBackend'
+    return 'django.core.mail.backends.console.EmailBackend'
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-vibe-studying-secret-key")
 DEBUG = env_bool("DEBUG", default=False)
 
-PUBLIC_API_HOST = os.getenv("PUBLIC_API_HOST", "")
-PUBLIC_API_ORIGIN = os.getenv(
-    "PUBLIC_API_ORIGIN",
-    f"https://{PUBLIC_API_HOST}" if PUBLIC_API_HOST else "",
-)
 LOCAL_DEV_HOSTS = ["localhost", "127.0.0.1", "testserver"]
+LOCAL_DEV_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+]
+
+PUBLIC_WEB_URL = normalize_origin(env_str('PUBLIC_WEB_URL', 'http://localhost:3000' if DEBUG else 'https://vibestudying.app'))
+PUBLIC_API_ORIGIN = normalize_origin(env_str("PUBLIC_API_ORIGIN", ""))
+PUBLIC_API_HOST = env_str("PUBLIC_API_HOST", extract_hostname(PUBLIC_API_ORIGIN))
+if not PUBLIC_API_ORIGIN and PUBLIC_API_HOST:
+    PUBLIC_API_ORIGIN = normalize_origin(f"https://{PUBLIC_API_HOST}")
+
+DEFAULT_ALLOWED_HOSTS = build_default_allowed_hosts(
+    public_api_host=PUBLIC_API_HOST,
+    public_api_origin=PUBLIC_API_ORIGIN,
+    public_web_url=PUBLIC_WEB_URL,
+    local_hosts=LOCAL_DEV_HOSTS,
+)
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    ",".join([*([PUBLIC_API_HOST] if PUBLIC_API_HOST else []), *LOCAL_DEV_HOSTS]),
+    ",".join(DEFAULT_ALLOWED_HOSTS),
 )
 
 
@@ -146,27 +222,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Diz ao Django que o projeto usa um User customizado em vez do auth.User padrao.
 AUTH_USER_MODEL = 'accounts.User'
 
-LOCAL_DEV_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
-]
-DEFAULT_CSRF_TRUSTED_ORIGINS = [
-    *([PUBLIC_API_ORIGIN] if PUBLIC_API_ORIGIN else []),
-    *LOCAL_DEV_ORIGINS,
-]
+DEFAULT_TRUSTED_ORIGINS = build_default_trusted_origins(
+    public_api_origin=PUBLIC_API_ORIGIN,
+    public_web_url=PUBLIC_WEB_URL,
+    include_local_origins=DEBUG,
+    local_origins=LOCAL_DEV_ORIGINS,
+)
 
 # O backend precisa aceitar qualquer origem para o frontend publicado e futuros clientes.
-CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=DEBUG)
 
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
-    ','.join(LOCAL_DEV_ORIGINS),
+    ','.join(DEFAULT_TRUSTED_ORIGINS),
 )
 CSRF_TRUSTED_ORIGINS = env_list(
     'CSRF_TRUSTED_ORIGINS',
-    ','.join(DEFAULT_CSRF_TRUSTED_ORIGINS),
+    ','.join(DEFAULT_TRUSTED_ORIGINS),
 )
 
 if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
@@ -179,7 +251,6 @@ if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = env_bool('USE_X_FORWARDED_HOST', default=True)
 
-PUBLIC_WEB_URL = os.getenv('PUBLIC_WEB_URL', 'https://vibestudying.app')
 RUNTIME_ENVIRONMENT = os.getenv('RUNTIME_ENVIRONMENT', 'development' if DEBUG else 'production')
 AI_CURATOR_EMAIL = os.getenv('AI_CURATOR_EMAIL', 'ai-curator@vibestudying.local')
 
@@ -232,19 +303,18 @@ JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_DAYS
 # mas deve ser fechado explicitamente fora dele.
 ENABLE_PUBLIC_TEACHER_SIGNUP = env_bool('ENABLE_PUBLIC_TEACHER_SIGNUP', default=DEBUG)
 
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.smtp.EmailBackend'
-    if os.getenv('EMAIL_HOST_USER') and os.getenv('EMAIL_HOST_PASSWORD')
-    else 'django.core.mail.backends.console.EmailBackend',
+EMAIL_HOST_USER = env_str('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = env_str('EMAIL_HOST_PASSWORD', '')
+EMAIL_BACKEND = resolve_email_backend(
+    configured_backend=env_str('EMAIL_BACKEND', ''),
+    email_host_user=EMAIL_HOST_USER,
+    email_host_password=EMAIL_HOST_PASSWORD,
 )
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vibestudying.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', default=False)
 
