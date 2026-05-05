@@ -26,6 +26,10 @@ import {
   type AuthorizationUrlPayload,
 } from "@/lib/auth";
 
+type AuthViewProps = {
+  turnstileSiteKey: string;
+};
+
 
 function getErrorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") {
@@ -62,7 +66,7 @@ function getSocialErrorMessage(code: string | null) {
 }
 
 
-const AuthView = () => {
+const AuthView = ({ turnstileSiteKey }: AuthViewProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
@@ -82,8 +86,8 @@ const AuthView = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
-  const isTurnstileConfigured = Boolean(turnstileSiteKey);
+  const normalizedTurnstileSiteKey = turnstileSiteKey.trim();
+  const isTurnstileConfigured = Boolean(normalizedTurnstileSiteKey);
 
   const clearCredentialError = () => setCredentialError("");
 
@@ -419,7 +423,7 @@ const AuthView = () => {
           </AnimatePresence>
 
           <div className="rounded-lg border border-primary/20 bg-background/40 p-3">
-            <TurnstileWidget ref={turnstileRef} siteKey={turnstileSiteKey} onTokenChange={setTurnstileToken} />
+            <TurnstileWidget ref={turnstileRef} siteKey={normalizedTurnstileSiteKey} onTokenChange={setTurnstileToken} />
             {!isTurnstileConfigured && (
               <p className="mt-2 text-center text-[10px] text-red-400">
                 Configure <code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code> para liberar o login web.
