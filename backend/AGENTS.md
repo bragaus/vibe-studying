@@ -1,4 +1,4 @@
-# AGENTS
+# AGENTS #
 
 ## Scope
 - This repository is backend-only. `README.md` describes the larger challenge (landing page, Next.js, Flutter), but the checked-in code here is only the Django + Django Ninja backend.
